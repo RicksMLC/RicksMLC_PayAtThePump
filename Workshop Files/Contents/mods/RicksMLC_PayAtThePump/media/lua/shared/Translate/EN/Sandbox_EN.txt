@@ -1,0 +1,12 @@
+Sandbox_EN = {
+    Sandbox_RicksMLC_PayAtThePump = "Rick's MLC Pay At The Pump",
+
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitre = "Price per litre",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitre_tooltip = "Price per litre at the pump.  The average price in the US was $0.26/litre in 1993.",
+
+    Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit = "Max Random Credit",
+    Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit_tooltip = "The maximum random $ balance a Credit Card will have when you pick it up.",
+
+    Sandbox_RicksMLC_PayAtThePump_MinRandomCredit = "Min Random Credit",
+    Sandbox_RicksMLC_PayAtThePump_MinRandomCredit_tooltip = "The minimum random $ balance a Credit Card will have when you pick it up.",
+}

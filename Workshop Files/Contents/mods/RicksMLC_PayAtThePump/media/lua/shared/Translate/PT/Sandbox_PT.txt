@@ -1,0 +1,16 @@
+-- Rick's MLC Pay At The Pump
+-- Encoding: ANSI
+
+Sandbox_PT = {
+    Sandbox_RicksMLC_PayAtThePump = "Rick's MLC Pague na bomba de gasolina",
+
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitre = "Preço por litro",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitre_tooltip = "Preço por litro na bomba de gasolina.  O preço médio nos EUA foi de 0,26 dólares/litro em 1993.",
+
+    Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit = "Max Crédito Aleatório",
+    Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit_tooltip = "O saldo máximo aleatório $ que um cartão de crédito terá quando você pegá-lo.",
+	
+	Sandbox_RicksMLC_PayAtThePump_MinRandomCredit = "Min Crédito Aleatório",
+    Sandbox_RicksMLC_PayAtThePump_MinRandomCredit_tooltip = "O saldo mínimo aleatório de $ que um cartão de crédito terá quando você pegá-lo.",
+
+}

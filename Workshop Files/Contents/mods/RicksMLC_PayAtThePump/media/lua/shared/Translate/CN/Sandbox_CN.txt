@@ -1,0 +1,16 @@
+-- Rick's MLC Pay At The Pump
+-- Chinese Simplified Translation - UTF-8
+
+Sandbox_CN = {
+    Sandbox_RicksMLC_PayAtThePump = "Rick's MLC 在加油站付款",
+
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitre = "每升价格",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitre_tooltip = "泵的每升价格。 1993年，美国的平均价格为0.26美元/升。",
+
+    Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit = "最大随机积分",
+    Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit_tooltip = "当您拿起信用卡时，信用卡将拥有的最大随机 $ 余额。",
+	
+	Sandbox_RicksMLC_PayAtThePump_MinRandomCredit = "最低随机积分",
+    Sandbox_RicksMLC_PayAtThePump_MinRandomCredit_tooltip = "信用卡在您取款时将拥有的最低随机 $ 余额。",
+
+}

@@ -1,0 +1,32 @@
+VERSION = 1,
+
+option RicksMLC_PayAtThePump.PricePerLitre
+{
+	type = double,
+	default = 0.26,
+	min = 0.01,
+	max = 5.0,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_PricePerLitre,
+}
+
+option RicksMLC_PayAtThePump.MinRandomCredit
+{
+	type = double,
+	default = 3.69,
+	min = 0.01,
+	max = 10,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_MinRandomCredit,
+}
+
+option RicksMLC_PayAtThePump.MaxRandomCredit
+{
+	type = double,
+	default = 120,
+	min = 11,
+	max = 250000,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_MaxRandomCredit,
+}
+

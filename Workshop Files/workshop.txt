@@ -1,0 +1,15 @@
+version=0.1
+title=Rick's MLC Pay & Pump
+description= "No dough, no go." - Quote from the Secure-Gas-And-Go Payments Processing Company
+description= 
+description= Gas pumps throughout the country have been updated to the finest level of secure payment possible.  
+description= To use a gas pump you will require either a Credit Card with a non-zero balance, or cash Money.  
+description= Each time you pick up a blank Credit Card an amount will be displayed in its description in your inventory.  
+description= When you use the gas pump it will draw down any Credit Cards and then Money in your primary inventory.  
+description= To aid in budgeting, any Credit Cards and Money in your backpacks or other packs will not be consumed.  
+description=
+description= This mod is @Nightscale's fault; many thanks for the idea and the specification.
+description= Many thanks to @Khontac for assistance and advice in designing the payments handling from the inventory. 
+description=
+tags=Build 41
+visibility=public
