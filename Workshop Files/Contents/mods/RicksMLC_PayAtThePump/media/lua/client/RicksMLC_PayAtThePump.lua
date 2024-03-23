@@ -204,25 +204,6 @@ end
 
 require "TimedActions/ISRefuelFromGasPump"
 
-local overrideStart = ISRefuelFromGasPump.start
-function ISRefuelFromGasPump.start(self)
-    overrideStart(self)
-    --DebugLog.log(DebugType.Mod, "RicksMLC: ISRefuelFromGasPump.start() pumpTarget before funds:" .. tostring(self.pumpTarget))
-
-    local funds = getPlayerMoney()
-    -- limit to credit cards first?
-    local takeLitres = (self.tankTarget - self.tankStart) + 0.0001 -- force to float for the math.min() call 
-    local affordableLitres = (funds.Cash + funds.Credit) / RicksMLC_PayAtThePump.PricePerLitre
-    local fundLitres = PZMath.min(takeLitres, affordableLitres)
-    self.action:setTime(fundLitres * 50)
-    self.tankTarget = self.tankStart + fundLitres
-    self.pumpTarget = self.pumpStart - fundLitres / (Vehicles.JerryCanLitres / 8)
-
-    self.fuelPurchased = 0
-    self.prevFuelPurchased = 0
-    self.deltaFuel = 0
-end
-
 local function roundMoney(num, decimalPlaces)
     local mult = 10^(decimalPlaces or 0)
     return math.floor(num * mult + 0.5) / mult
@@ -255,10 +236,18 @@ local function HandleEmergencyStop(self)
     end
 end
 
-local overrideUpdate = ISRefuelFromGasPump.update
-function ISRefuelFromGasPump.update(self)
-    overrideUpdate(self)
+local overrideISRefuelFromGasPumpNew = ISRefuelFromGasPump.new
+function ISRefuelFromGasPump:new(character, part, fuelStation, time)
+    local this = overrideISRefuelFromGasPumpNew(self, character, part, fuelStation, time)
+    this.fuelPurchased = 0
+    this.prevFuelPurchased = 0
+    this.deltaFuel = 0
+    return this
+end
 
+local overrideISRefuelFromGasPumpUpdate = ISRefuelFromGasPump.update
+function ISRefuelFromGasPump.update(self)
+    overrideISRefuelFromGasPumpUpdate(self)
 	self.fuelPurchased = (self.tankTarget - self.tankStart) * self:getJobDelta()
     self.deltaFuel = self.deltaFuel + self.fuelPurchased - self.prevFuelPurchased
     self.prevFuelPurchased = self.fuelPurchased
@@ -274,39 +263,28 @@ end
 ----------------------------------------------
 require "TimedActions/ISTakeFuel"
 
+local overrideISTakeFuelNew = ISTakeFuel.new
+function ISTakeFuel:new(character, fuelStation, petrolCan, time)
+    local this = overrideISTakeFuelNew(self, character, fuelStation, petrolCan, time)
+    this.fuelPurchased = 0
+    this.prevFuelPurchased = 0
+    this.deltaFuel = 0
+    return this
+end
+
 local overrideTakeFuelUpdate = ISTakeFuel.update
 function ISTakeFuel.update(self)
     overrideTakeFuelUpdate(self)
-
 	self.fuelPurchased = math.floor(self.itemStart + (self.itemTarget - self.itemStart) * self:getJobDelta() + 0.001)
     self.deltaFuel = self.deltaFuel + self.fuelPurchased - self.prevFuelPurchased
     self.prevFuelPurchased = self.fuelPurchased
     PayForFuel(self)
 end
 
-local overrideTakeFuelStart = ISTakeFuel.start
-function ISTakeFuel.start(self)
-    overrideTakeFuelStart(self)
-
-    local funds = getPlayerMoney()
-
-    local takeLitres = (self.itemTarget - self.itemStart) + 0.0001 -- force to float for the math.min() call
-    local affordableLitres = (funds.Cash + funds.Credit) / RicksMLC_PayAtThePump.PricePerLitre
-    local fundLitres = PZMath.min(takeLitres, affordableLitres) 
-    self.action:setTime(fundLitres * 50)
-
-	self.itemTarget = self.itemStart + fundLitres
-
-    self.fuelPurchased = 0
-    self.prevFuelPurchased = 0
-    self.deltaFuel = 0
-end
-
-local overrideTakeFuelStop = ISTakeFuel.stop
+local overrideISTakeFuelStop = ISTakeFuel.stop
 function ISTakeFuel.stop(self)
     HandleEmergencyStop(self)
-
-    overrideTakeFuelStop(self)
+    overrideISTakeFuelStop(self)
 end
 
 
