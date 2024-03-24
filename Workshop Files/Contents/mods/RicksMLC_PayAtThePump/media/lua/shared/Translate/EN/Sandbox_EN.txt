@@ -1,8 +1,14 @@
 Sandbox_EN = {
     Sandbox_RicksMLC_PayAtThePump = "Rick's MLC Pay At The Pump",
 
-    Sandbox_RicksMLC_PayAtThePump_PricePerLitre = "Price per litre",
-    Sandbox_RicksMLC_PayAtThePump_PricePerLitre_tooltip = "Price per litre at the pump.  The average price in the US was $0.26/litre in 1993.",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePetrol = "Price per litre (Petrol)",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePetrol_tooltip = "Price per litre for Petrol at the pump.  The average price in the US was $0.26/litre in 1993. This is the default fuel price in the base Project Zomboid game.",
+
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreDiesel = "Price per litre (Diesel)",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreDiesel_tooltip = "Treads Fuel API: Price per litre for Diesel at the pump.  The average price in the US was $0.28/litre in 1993.",
+
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreLPG = "Price per litre (LPG)",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreLPG_tooltip = "Treads Fuel API: Price per litre for LPG at the pump.  The average price in the US was $0.29/litre in 1993.",
 
     Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit = "Max Random Credit",
     Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit_tooltip = "The maximum random $ balance a Credit Card will have when you pick it up.",

@@ -4,8 +4,14 @@
 Sandbox_CN = {
     Sandbox_RicksMLC_PayAtThePump = "Rick's MLC 在加油站付款",
 
-    Sandbox_RicksMLC_PayAtThePump_PricePerLitre = "每升价格",
-    Sandbox_RicksMLC_PayAtThePump_PricePerLitre_tooltip = "泵的每升价格。 1993年，美国的平均价格为0.26美元/升。",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePetrol = "每升价格（汽油）",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePetrol_tooltip = "加油站每升汽油价格。 1993 年，美国的平均价格为 0.26 美元/升。这是基础 Project Zomboid 游戏中的默认燃料价格。",
+
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreDiesel = "每升价格（柴油）",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreDiesel_tooltip = "Treads Fuel API：加油站柴油的每升价格。 1993 年，美国的平均价格为 0.28 美元/升。",
+
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreLPG = "每升价格（LPG）",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreLPG_tooltip = "Treads Fuel API：加油站液化石油气的每升价格。 1993 年，美国的平均价格为 0.29 美元/升。",
 
     Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit = "最大随机积分",
     Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit_tooltip = "当您拿起信用卡时，信用卡将拥有的最大随机 $ 余额。",

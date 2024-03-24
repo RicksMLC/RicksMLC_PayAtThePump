@@ -1,14 +1,35 @@
 VERSION = 1,
 
-option RicksMLC_PayAtThePump.PricePerLitre
+option RicksMLC_PayAtThePump.PricePerLitrePetrol
 {
 	type = double,
 	default = 0.26,
 	min = 0.01,
 	max = 5.0,
 	page = RicksMLC_PayAtThePump,
-	translation = RicksMLC_PayAtThePump_PricePerLitre,
+	translation = RicksMLC_PayAtThePump_PricePerLitrePetrol,
 }
+
+option RicksMLC_PayAtThePump.PricePerLitreDiesel
+{
+	type = double,
+	default = 0.28,
+	min = 0.01,
+	max = 5.0,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_PricePerLitreDiesel,
+}
+
+option RicksMLC_PayAtThePump.PricePerLitreLPG
+{
+	type = double,
+	default = 0.29,
+	min = 0.01,
+	max = 5.0,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_PricePerLitreLPG,
+}
+
 
 option RicksMLC_PayAtThePump.MinRandomCredit
 {

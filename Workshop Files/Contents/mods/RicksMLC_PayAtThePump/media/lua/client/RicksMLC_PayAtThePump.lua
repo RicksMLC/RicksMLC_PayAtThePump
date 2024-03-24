@@ -20,7 +20,9 @@
 
 RicksMLC_PayAtThePump = {}
 
-RicksMLC_PayAtThePump.PricePerLitre = SandboxVars.RicksMLC_PayAtThePump.PricePerLitre
+RicksMLC_PayAtThePump.PricePerLitrePetrol = SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol
+RicksMLC_PayAtThePump.PricePerLitreDiesel = SandboxVars.RicksMLC_PayAtThePump.PricePerLitreDiesel
+RicksMLC_PayAtThePump.PricePerLitreLPG = SandboxVars.RicksMLC_PayAtThePump.PricePerLitreLPG
 RicksMLC_PayAtThePump.MinRandomCredit = SandboxVars.RicksMLC_PayAtThePump.MinRandomCredit
 RicksMLC_PayAtThePump.MaxRandomCredit = SandboxVars.RicksMLC_PayAtThePump.MaxRandomCredit
 
@@ -118,9 +120,7 @@ local b = {1.0, 0.0,  0.0}
 local fonts = {UIFont.AutoNormLarge, UIFont.AutoNormMedium, UIFont.AutoNormSmall, UIFont.Handwritten}
 local function Think(player, thought, colourNum)
 	-- colourNum 1 = white, 2 = green, 3 = red
-	-- FIXME: Comment player:Say() out for now. Using the setHaloNote() needs testing "in the field" but works in test here.
-	--  May be hard to read on other streamers depending on their font size settings?
-	--player:Say(thought, r[colourNum], g[colourNum], b[colourNum], fonts[2], 1, "radio")
+	-- May be hard to read on other streamers depending on their font size settings?
     player:setHaloNote(thought, r[colourNum] * 255, g[colourNum] * 255, b[colourNum] * 255, 250)
 end
 
@@ -202,15 +202,32 @@ end
 --------------------------------------------
 -- The actual RefuelFromGasPump code is quite small compared to the economic system above.
 
-require "TimedActions/ISRefuelFromGasPump"
+-- General init and update handlers
+local function initPurchaseFuel(self)
+    self.fuelPurchased = 0
+    self.prevFuelPurchased = 0
+    self.deltaFuel = 0
+    return self
+end
 
 local function roundMoney(num, decimalPlaces)
     local mult = 10^(decimalPlaces or 0)
     return math.floor(num * mult + 0.5) / mult
 end
 
-local function PayForFuel(self)
-    local cost = roundMoney(self.deltaFuel * RicksMLC_PayAtThePump.PricePerLitre, 2)
+local function getPricePerLitre(self)
+    if not self.fuelType then return RicksMLC_PayAtThePump.PricePerLitrePetrol end
+    if self.fuelType == "Gasoline" then return RicksMLC_PayAtThePump.PricePerLitrePetrol end
+    if self.fuelType == "Diesel" then return RicksMLC_PayAtThePump.PricePerLitreDiesel end
+    if self.fuelType == "LPG" then return RicksMLC_PayAtThePump.PricePerLitreLPG end
+
+    -- Default to the petrol price
+    return RicksMLC_PayAtThePump.PricePerLitrePetrol
+end
+
+local function payForFuel(self)
+    local price = getPricePerLitre(self)
+    local cost = roundMoney(self.deltaFuel * price, 2)
     if math.floor(cost * 100) > 0 then
         local change = reduceFunds(cost)
         self.deltaFuel = self.deltaFuel - (cost - change) -- not really change, but we can't split Money, so this will reduce every whole dollar.
@@ -221,9 +238,18 @@ local function PayForFuel(self)
     end    
 end
 
-local function HandleEmergencyStop(self)
+local function updateFuelPurchase(self, start, target)
+    --self.fuelPurchased = math.floor(start + (target - start) * self:getJobDelta() + 0.001)
+    self.fuelPurchased = (target - start) * self:getJobDelta()
+    self.deltaFuel = self.deltaFuel + self.fuelPurchased - self.prevFuelPurchased
+    self.prevFuelPurchased = self.fuelPurchased
+    payForFuel(self)
+end
+
+local function handleEmergencyStop(self)
     if self.deltaFuel > 0 then
-        local cost = roundMoney(self.deltaFuel * RicksMLC_PayAtThePump.PricePerLitre, 2)
+        local price = getPricePerLitre(self)
+        local cost = roundMoney(self.deltaFuel * price, 2)
         if cost > 0.01 then
             local change = reduceFunds(cost)
             if change > 0 then
@@ -236,55 +262,114 @@ local function HandleEmergencyStop(self)
     end
 end
 
+-----------------------------------------
+require "Vehicles/TimedActions/ISRefuelFromGasPump"
+
 local overrideISRefuelFromGasPumpNew = ISRefuelFromGasPump.new
 function ISRefuelFromGasPump:new(character, part, fuelStation, time)
     local this = overrideISRefuelFromGasPumpNew(self, character, part, fuelStation, time)
-    this.fuelPurchased = 0
-    this.prevFuelPurchased = 0
-    this.deltaFuel = 0
+    initPurchaseFuel(this)
     return this
 end
 
 local overrideISRefuelFromGasPumpUpdate = ISRefuelFromGasPump.update
 function ISRefuelFromGasPump.update(self)
     overrideISRefuelFromGasPumpUpdate(self)
-	self.fuelPurchased = (self.tankTarget - self.tankStart) * self:getJobDelta()
-    self.deltaFuel = self.deltaFuel + self.fuelPurchased - self.prevFuelPurchased
-    self.prevFuelPurchased = self.fuelPurchased
-    PayForFuel(self)
+    updateFuelPurchase(self, self.tankStart, self.tankTarget)
 end
 
 local overrideStop = ISRefuelFromGasPump.stop
 function ISRefuelFromGasPump.stop(self)
-    HandleEmergencyStop(self)
+    handleEmergencyStop(self)
     overrideStop(self)
 end
 
 ----------------------------------------------
-require "TimedActions/ISTakeFuel"
-
-local overrideISTakeFuelNew = ISTakeFuel.new
-function ISTakeFuel:new(character, fuelStation, petrolCan, time)
-    local this = overrideISTakeFuelNew(self, character, fuelStation, petrolCan, time)
-    this.fuelPurchased = 0
-    this.prevFuelPurchased = 0
-    this.deltaFuel = 0
-    return this
+if getActivatedMods():contains("TreadsFuelTypesFramework") then
+    -- [+] RS_FuelTypesAPI_ISTakeFuel.lua -- This is from the FuelAPI compatibility sub-mod
+    require "TimedActions/RS_FuelTypesAPI_ISTakeFuel"
+    local overrideFuelAPI_ISTakeFuelNew = ISTakeFuel.new
+    function ISTakeFuel:new(character, fuelStation, petrolCan, time, fuelType)
+        local this = overrideFuelAPI_ISTakeFuelNew(self, character, fuelStation, petrolCan, time, fuelType)
+        initPurchaseFuel(this)
+        return this
+    end
+else
+    require "TimedActions/ISTakeFuel"
+    local overrideISTakeFuelNew = ISTakeFuel.new
+    function ISTakeFuel:new(character, fuelStation, petrolCan, time)
+        local this = overrideISTakeFuelNew(self, character, fuelStation, petrolCan, time)
+        initPurchaseFuel(this)
+        return this
+    end
 end
 
 local overrideTakeFuelUpdate = ISTakeFuel.update
 function ISTakeFuel.update(self)
     overrideTakeFuelUpdate(self)
-	self.fuelPurchased = math.floor(self.itemStart + (self.itemTarget - self.itemStart) * self:getJobDelta() + 0.001)
-    self.deltaFuel = self.deltaFuel + self.fuelPurchased - self.prevFuelPurchased
-    self.prevFuelPurchased = self.fuelPurchased
-    PayForFuel(self)
+    updateFuelPurchase(self, self.itemStart, self.itemTarget)
 end
 
 local overrideISTakeFuelStop = ISTakeFuel.stop
 function ISTakeFuel.stop(self)
-    HandleEmergencyStop(self)
+    handleEmergencyStop(self)
     overrideISTakeFuelStop(self)
+end
+
+
+-------------------------------------------------------------------
+-- Compatibility for Tread's Fuel Types Framework [41.65+]
+-- [?] RS_FuelTypesAPI_PumpFuelToBarrel.lua - Unable to test - no barrels have right click option to fill from pump?
+-- [+] RS_FuelTypesAPI_RefuellFromPump.lua
+-- [+] RS_FuelTypesAPI_ISTakeFuel.lua
+
+if getActivatedMods():contains("TreadsFuelTypesFramework") then
+
+    -- [?] RS_FuelTypesAPI_PumpFuelToBarrel.lua 
+    require "Vehicles/TimedActions/RS_FuelTypesAPI_PumpFuelToBarrel"
+    if ISPumpFuelToBarrel then
+        local ovrrideISPumpFuelToBarrelNew = ISPumpFuelToBarrel.new
+        function ISPumpFuelToBarrel:new(character, part, fuelStation, time)
+            local this = ovrrideISPumpFuelToBarrelNew(self, character, part, fuelStation, time)
+            initPurchaseFuel(this)
+            return this
+        end
+
+        local ovrrideISPumpFuelToBarrelUpdate = ISTakeFuel.update
+        function ISPumpFuelToBarrel.update(self)
+            overrideTakeFuelUpdate(self)
+            updateFuelPurchase(self, self.barrelStart, self.barrelTarget)
+        end
+
+        local ovrrideISPumpFuelToBarrelStop = ISTakeFuel.stop
+        function ISPumpFuelToBarrel.stop(self)
+            handleEmergencyStop(self)
+            ovrrideISPumpFuelToBarrelStop(self)
+        end
+    end
+
+    -- [+] RS_FuelTypesAPI_RefuellFromPump.lua
+    require "Vehicles/TimedActions/RS_FuelTypesAPI_RefuellFromPump"
+    if ISRefuelFromGasPumpRSFuel then
+        local overrideISRefuelFromGasPumpRSFuelNew = ISRefuelFromGasPumpRSFuel.new
+        function ISRefuelFromGasPumpRSFuel:new(character, part, fuelStation, fuelType, time)
+            local this = overrideISRefuelFromGasPumpRSFuelNew(self, character, part, fuelStation, fuelType, time)
+            initPurchaseFuel(this)
+            return this
+        end
+
+        local overrideISRefuelFromGasPumpRSFuelUpdate = ISRefuelFromGasPumpRSFuel.update
+        function ISRefuelFromGasPumpRSFuel:update()
+            overrideISRefuelFromGasPumpRSFuelUpdate(self)
+            updateFuelPurchase(self, self.tankStart, self.tankTarget)
+        end
+
+        local overrideISRefuelFromGasPumpRSFuelStop = ISRefuelFromGasPumpRSFuel.stop
+        function ISRefuelFromGasPumpRSFuel:stop()
+            handleEmergencyStop(self)
+            overrideISRefuelFromGasPumpRSFuelStop(self)
+        end
+    end
 end
 
 
