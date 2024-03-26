@@ -204,6 +204,12 @@ end
 
 -- General init and update handlers
 local function initPurchaseFuel(self)
+    if instanceof(self.fuelStation, "IsoThumpable") then
+        -- This is not a fuel pump.  It may be a barrel from FuelAPI.  A vanilla fuel pump is an IsoObject.
+        self.isFuelPump = false
+    else
+        self.isFuelPump = true
+    end
     self.fuelPurchased = 0
     self.prevFuelPurchased = 0
     self.deltaFuel = 0
@@ -239,7 +245,8 @@ local function payForFuel(self)
 end
 
 local function updateFuelPurchase(self, start, target)
-    --self.fuelPurchased = math.floor(start + (target - start) * self:getJobDelta() + 0.001)
+    if not self.isFuelPump then return end
+
     self.fuelPurchased = (target - start) * self:getJobDelta()
     self.deltaFuel = self.deltaFuel + self.fuelPurchased - self.prevFuelPurchased
     self.prevFuelPurchased = self.fuelPurchased
@@ -247,6 +254,8 @@ local function updateFuelPurchase(self, start, target)
 end
 
 local function handleEmergencyStop(self)
+    if not self.isFuelPump then return end
+
     if self.deltaFuel > 0 then
         local price = getPricePerLitre(self)
         local cost = roundMoney(self.deltaFuel * price, 2)
