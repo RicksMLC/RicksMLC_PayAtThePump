@@ -4,10 +4,14 @@
 -- Use PZ Moneez
 -- Use Credit Cardz
 -- TODO: Credit Cardz: Can add credit by powering up a bank/ATM and using a cash register?
-
+--
 -- TimedActions/ISTakeFuel
 -- TimedActions/ISRefuelFromGasPump
-
+-- 
+-- Mod Compatibility:
+--      FuelAPI https://steamcommunity.com/sharedfiles/filedetails/?id=2688538916
+--      Tread's Fuel Types Framework [41.65+] https://steamcommunity.com/sharedfiles/filedetails/?id=2765042813
+--
 -- The gameplay action can be simple (and magic) or more player interactive:
 -- 1993 price was $1.17/gal => $0.26 per litre
 --  1) Check the player's inventory for cash and reduce by the petrol amount ($0.26/litre?)
@@ -204,11 +208,15 @@ end
 
 -- General init and update handlers
 local function initPurchaseFuel(self)
-    if instanceof(self.fuelStation, "IsoThumpable") then
-        -- This is not a fuel pump.  It may be a barrel from FuelAPI.  A vanilla fuel pump is an IsoObject.
-        self.isFuelPump = false
-    else
+    local textureName = self.fuelStation:getTextureName()
+    -- Vanilla gas pump textures eg:
+    -- location_shop_fossoil_01_14
+    -- location_shop_gas2go_01_12
+    if string.find(textureName, "fossoil") or string.find(textureName, "gas2go") then
         self.isFuelPump = true
+    else
+        -- This is not a fuel pump.  It may be a barrel from FuelAPI.
+        self.isFuelPump = false
     end
     self.fuelPurchased = 0
     self.prevFuelPurchased = 0
