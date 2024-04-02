@@ -11,6 +11,9 @@
 -- Mod Compatibility:
 --      FuelAPI https://steamcommunity.com/sharedfiles/filedetails/?id=2688538916
 --      Tread's Fuel Types Framework [41.65+] https://steamcommunity.com/sharedfiles/filedetails/?id=2765042813
+--      Pumps Have Propane https://steamcommunity.com/sharedfiles/filedetails/?id=2739570406
+--      CreditCardsPlus https://steamcommunity.com/sharedfiles/filedetails/?id=2873621032
+--      Snake's Mod https://steamcommunity.com/sharedfiles/filedetails/?id=2719327441 (PremiumCreditCard)
 --
 -- The gameplay action can be simple (and magic) or more player interactive:
 -- 1993 price was $1.17/gal => $0.26 per litre
@@ -31,7 +34,7 @@ RicksMLC_PayAtThePump.MinRandomCredit = SandboxVars.RicksMLC_PayAtThePump.MinRan
 RicksMLC_PayAtThePump.MaxRandomCredit = SandboxVars.RicksMLC_PayAtThePump.MaxRandomCredit
 
 local function findMoneyClosure(x, obj)
-    local matchItem = x:getType() == "Money" or x:getType() == "CreditCard"
+    local matchItem = x:getType() == "Money" or string.find(x:getType(), "CreditCard")
     if matchItem then
         return true
     end
@@ -48,7 +51,7 @@ local function getPlayerMoney()
             local itemType = itemList:get(i):getType()
             if itemType == "Money" then
                 cashOnHand = cashOnHand + 1
-            elseif itemType == "CreditCard" then
+            elseif string.find(itemType, "CreditCard") ~= nil then
                 local modData = itemList:get(i):getModData()["RicksMLC_CreditCardz"]
                 if modData then
                     credit = credit + modData.Balance
@@ -93,9 +96,15 @@ local function changeCreditBalance(creditCard, amount)
     return remainAmount
 end
 
+local function findValidCreditCardClosure(x)
+    return (string.find(x:getType(), "CreditCard") ~= nil 
+            and x:getModData()["RicksMLC_CreditCardz"]
+            and x:getModData()["RicksMLC_CreditCardz"].Balance > 0)
+end 
+
 local function reduceCreditBalances(amount)
     local itemContainer = getPlayer():getInventory()
-    local itemList = itemContainer:getAllType("CreditCard")
+    local itemList = itemContainer:getAllEval(findValidCreditCardClosure)
     if not itemList:isEmpty() then
         for i = 0, itemList:size()-1 do 
             amount = changeCreditBalance(itemList:get(i), -amount)
@@ -165,18 +174,28 @@ local function AddCredit(key)
         -- Shout us some more credit
         AddRandomCredit(10)
     end
-
 end
 --Events.OnKeyPressed.Add(AddCredit)
 
 --------------------------------------------
 -- Detect if a credit card is picked up.
--- Override the ISInventoryTransferAction:transferItem(item) (or something) so I can detect placing the treasure into the player inventory.
 
 require "TimedActions/ISInventoryTransferAction"
 
+local function adjustValueByOtherModsCardType(creditCard, initAmount)
+    -- CreditCardPlus compatibility: silver < black < gold
+    if creditCard:getType() == "CreditCard3" then return initAmount * 0.50 end -- silver
+    if creditCard:getType() == "CreditCard4" then return initAmount * 2.75 end -- gold
+    --"CreditCard2" is black => same as vanilla credit card so no change
+
+    -- PremiumCreditCard from 
+    if creditCard:getType() == "PremiumCreditCard" then return initAmount * 1.25 end
+
+    return initAmount
+end
+
 local function detectNewCreditCardClosure(x)
-    return (x:getType() == "CreditCard" and x:getModData()["RicksMLC_CreditCardz"] == nil)
+    return (string.find(x:getType(), "CreditCard") ~= nil and x:getModData()["RicksMLC_CreditCardz"] == nil)
 end 
 
 local function InitAnyCreditCards(character)
@@ -184,7 +203,9 @@ local function InitAnyCreditCards(character)
     local itemList = itemContainer:getAllEvalRecurse(detectNewCreditCardClosure)
     if not itemList then return end
     for i = 0, itemList:size()-1 do 
-        changeCreditBalance(itemList:get(i), ZombRand(RicksMLC_PayAtThePump.MinRandomCredit, RicksMLC_PayAtThePump.MaxRandomCredit))
+        local initBalance = ZombRand(RicksMLC_PayAtThePump.MinRandomCredit, RicksMLC_PayAtThePump.MaxRandomCredit)
+        adjustValueByOtherModsCardType(itemList:get(i), initBalance)
+        changeCreditBalance(itemList:get(i), initBalance)
     end
 end
 
@@ -252,10 +273,21 @@ local function payForFuel(self)
     end    
 end
 
-local function updateFuelPurchase(self, start, target)
+-- updateFuelPurchase
+-- @param self  TimedAction object
+-- @param startOrAmt Start amount of fuel / fuel in this update if target is nil
+-- @param target Target amount of fuel.
+-- The amount of fuel purchased is calculated from the start amount in the tank and the target amount at the end of the TA
+-- and the time so far (getJobDelta()).  
+-- If target is nil, the startOrAmt is the amount purchased in this update call.
+local function updateFuelPurchase(self, startOrAmt, target)
     if not self.isFuelPump then return end
 
-    self.fuelPurchased = (target - start) * self:getJobDelta()
+    if target then
+        self.fuelPurchased = (target - startOrAmt) * self:getJobDelta()
+    else
+        self.fuelPurchased = startOrAmt
+    end
     self.deltaFuel = self.deltaFuel + self.fuelPurchased - self.prevFuelPurchased
     self.prevFuelPurchased = self.fuelPurchased
     payForFuel(self)
@@ -389,4 +421,82 @@ if getActivatedMods():contains("TreadsFuelTypesFramework") then
     end
 end
 
+-------------------------------------------------------------------
+-- Compatibility for Pumps Have Propane
+if getActivatedMods():contains("ugPHP") then
 
+    -- TODO: Uncomment when I find a large tank to test this
+    -- require "TimedActions/UGFillLargeTank"
+    -- require "IGUI/UGTakePropaneMenu"
+    -- if UGFillLargeTank then
+    --     local overrideUGFillLargeTankNew = UGFillLargeTank.new
+    --     function UGFillLargeTank:new(propanetankobject, character, time)
+    --         local this = overrideUGFillLargeTankNew(self, propanetankobject, character, time)
+    --         this.fuelStation = FindNearbyGasPump(propanetankobject) -- This function is defined in ISUI/UGTakePropaneMenu
+    --         initPurchaseFuel(this)
+    --         return this
+    --     end
+    --
+    --     local overrideUGFillLargeTankUpdate = UGFillLargeTank.update
+    --     function UGFillLargeTank:update()
+    --         local tankStart = self.propanetankobjectdata.PropaneContent
+    --         overrideUGFillLargeTankUpdate(self)
+    --         local tankNew = self.propanetankobjectdata.PropaneContent
+    --         if tankNew > tankStart then
+    --             updateFuelPurchase(self, tankNew - tankStart)
+    --         end
+    --     end
+    --
+    --     local overrideUGFillLargeTankStop = UGFillLargeTank.stop
+    --     function UGFillLargeTank:stop()
+    --         handleEmergencyStop(self)
+    --         overrideUGFillLargeTankStop(self)
+    --     end
+    -- end
+
+    require "TimedActions/UGFillPropaneTruck"
+    if UGFillPropaneTruck then
+        local overrideUGFillPropaneTruckNew = UGFillPropaneTruck.new
+        function UGFillPropaneTruck:new(part, character, time)
+            local this = overrideUGFillPropaneTruckNew(self, part, character, time)
+            this.fuelStation = ISVehiclePartMenu.getNearbyFuelPump(part:getVehicle())
+            initPurchaseFuel(this)
+            return this
+        end
+
+        local overrideUGFillPropaneTruckUpdate = UGFillPropaneTruck.update
+        function UGFillPropaneTruck:update()
+            overrideUGFillPropaneTruckUpdate(self)
+            updateFuelPurchase(self, self.part:getContainerContentAmount() - self.tankStart)
+        end
+
+        local overrideUGFillPropaneTruckStop = UGFillPropaneTruck.stop
+        function UGFillPropaneTruck:stop()
+            handleEmergencyStop(self)
+            overrideUGFillPropaneTruckStop(self)
+        end
+    end
+
+    require "TimedActions/UGTakePropane"
+    if UGTakePropane then
+        local overrideUGTakePropaneNew = UGTakePropane.new
+        function UGTakePropane:new(pump, tank, player, time, duration, istorch)
+            local this = overrideUGTakePropaneNew(self, pump, tank, player, time, duration, istorch)
+            this.fuelStation = pump -- The UGTakePropane does not inherit from ISTakeFuel therefore is missing its self.fuelStation
+            initPurchaseFuel(this)
+            return this
+        end
+
+        local overrideUGTakePropaneUpdate = UGTakePropane.update
+        function UGTakePropane:update()
+            overrideUGTakePropaneUpdate(self)
+            updateFuelPurchase(self, self.itemStart, self.itemTarget)
+        end
+
+        local overrideUGTakePropaneStop = UGTakePropane.stop
+        function UGTakePropane:stop()
+            handleEmergencyStop(self)
+            overrideUGTakePropaneStop(self)
+        end
+    end
+end

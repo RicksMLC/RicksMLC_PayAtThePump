@@ -30,6 +30,16 @@ option RicksMLC_PayAtThePump.PricePerLitreLPG
 	translation = RicksMLC_PayAtThePump_PricePerLitreLPG,
 }
 
+option RicksMLC_PayAtThePump.PricePerLitrePropane
+{
+	type = double,
+	default = 0.27,
+	min = 0.01,
+	max = 5.0,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_PricePerLitrePropane,
+}
+
 
 option RicksMLC_PayAtThePump.MinRandomCredit
 {

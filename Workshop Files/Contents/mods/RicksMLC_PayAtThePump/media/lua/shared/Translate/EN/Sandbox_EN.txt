@@ -10,6 +10,9 @@ Sandbox_EN = {
     Sandbox_RicksMLC_PayAtThePump_PricePerLitreLPG = "Price per litre (LPG)",
     Sandbox_RicksMLC_PayAtThePump_PricePerLitreLPG_tooltip = "Treads Fuel API: Price per litre for LPG at the pump.  The average price in the US was $0.29/litre in 1993.",
 
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePropane = "Price per litre (Propane)",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePropane_tooltip = "Pumps Have Propane: Price per litre for Propane.  The average price in the US was $0.27/litre in 1993.",
+
     Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit = "Max Random Credit",
     Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit_tooltip = "The maximum random $ balance a Credit Card will have when you pick it up.",
 

@@ -13,6 +13,9 @@ Sandbox_ES = {
     Sandbox_RicksMLC_PayAtThePump_PricePerLitreLPG = "Precio por litro (GLP)",
     Sandbox_RicksMLC_PayAtThePump_PricePerLitreLPG_tooltip = "Treads Fuel API: Precio por litro de GLP en el surtidor.  El precio medio en los Estados Unidos fue de 0,29 dólares por litro en 1993.",
 
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePropane = "Precio por litro (propano)",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePropane_tooltip = "Las bombas tienen propano: Precio por litro de propano.  El precio medio en los Estados Unidos fue de 0,27 dólares por litro en 1993.",
+
     Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit = "Crédito aleatorio máximo",
     Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit_tooltip = "El saldo máximo aleatorio en $ que tendrá una tarjeta de crédito cuando se recoja.",
 	
