@@ -30,6 +30,7 @@ RicksMLC_PayAtThePump = {}
 RicksMLC_PayAtThePump.PricePerLitrePetrol = SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol
 RicksMLC_PayAtThePump.PricePerLitreDiesel = SandboxVars.RicksMLC_PayAtThePump.PricePerLitreDiesel
 RicksMLC_PayAtThePump.PricePerLitreLPG = SandboxVars.RicksMLC_PayAtThePump.PricePerLitreLPG
+RicksMLC_PayAtThePump.PricePerLitrePropane = SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePropane
 RicksMLC_PayAtThePump.MinRandomCredit = SandboxVars.RicksMLC_PayAtThePump.MinRandomCredit
 RicksMLC_PayAtThePump.MaxRandomCredit = SandboxVars.RicksMLC_PayAtThePump.MaxRandomCredit
 
@@ -255,6 +256,7 @@ local function getPricePerLitre(self)
     if self.fuelType == "Gasoline" then return RicksMLC_PayAtThePump.PricePerLitrePetrol end
     if self.fuelType == "Diesel" then return RicksMLC_PayAtThePump.PricePerLitreDiesel end
     if self.fuelType == "LPG" then return RicksMLC_PayAtThePump.PricePerLitreLPG end
+    if self.fuelType == "Propane" then return RicksMLC_PayAtThePump.PricePerLitrePropane end
 
     -- Default to the petrol price
     return RicksMLC_PayAtThePump.PricePerLitrePetrol
@@ -460,6 +462,7 @@ if getActivatedMods():contains("ugPHP") then
         function UGFillPropaneTruck:new(part, character, time)
             local this = overrideUGFillPropaneTruckNew(self, part, character, time)
             this.fuelStation = ISVehiclePartMenu.getNearbyFuelPump(part:getVehicle())
+            this.fuelType = "Propane"
             initPurchaseFuel(this)
             return this
         end
@@ -483,6 +486,7 @@ if getActivatedMods():contains("ugPHP") then
         function UGTakePropane:new(pump, tank, player, time, duration, istorch)
             local this = overrideUGTakePropaneNew(self, pump, tank, player, time, duration, istorch)
             this.fuelStation = pump -- The UGTakePropane does not inherit from ISTakeFuel therefore is missing its self.fuelStation
+            this.fuelType = "Propane"
             initPurchaseFuel(this)
             return this
         end
