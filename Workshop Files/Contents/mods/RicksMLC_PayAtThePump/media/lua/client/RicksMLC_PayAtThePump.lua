@@ -27,13 +27,6 @@
 
 RicksMLC_PayAtThePump = {}
 
-RicksMLC_PayAtThePump.PricePerLitrePetrol = SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol
-RicksMLC_PayAtThePump.PricePerLitreDiesel = SandboxVars.RicksMLC_PayAtThePump.PricePerLitreDiesel
-RicksMLC_PayAtThePump.PricePerLitreLPG = SandboxVars.RicksMLC_PayAtThePump.PricePerLitreLPG
-RicksMLC_PayAtThePump.PricePerLitrePropane = SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePropane
-RicksMLC_PayAtThePump.MinRandomCredit = SandboxVars.RicksMLC_PayAtThePump.MinRandomCredit
-RicksMLC_PayAtThePump.MaxRandomCredit = SandboxVars.RicksMLC_PayAtThePump.MaxRandomCredit
-
 local function findMoneyClosure(x, obj)
     local matchItem = x:getType() == "Money" or string.find(x:getType(), "CreditCard")
     if matchItem then
@@ -204,7 +197,7 @@ local function InitAnyCreditCards(character)
     local itemList = itemContainer:getAllEvalRecurse(detectNewCreditCardClosure)
     if not itemList then return end
     for i = 0, itemList:size()-1 do 
-        local initBalance = ZombRand(RicksMLC_PayAtThePump.MinRandomCredit, RicksMLC_PayAtThePump.MaxRandomCredit)
+        local initBalance = ZombRand(SandboxVars.RicksMLC_PayAtThePump.MinRandomCredit, SandboxVars.RicksMLC_PayAtThePump.MaxRandomCredit)
         adjustValueByOtherModsCardType(itemList:get(i), initBalance)
         changeCreditBalance(itemList:get(i), initBalance)
     end
@@ -252,14 +245,14 @@ local function roundMoney(num, decimalPlaces)
 end
 
 local function getPricePerLitre(self)
-    if not self.fuelType then return RicksMLC_PayAtThePump.PricePerLitrePetrol end
-    if self.fuelType == "Gasoline" then return RicksMLC_PayAtThePump.PricePerLitrePetrol end
-    if self.fuelType == "Diesel" then return RicksMLC_PayAtThePump.PricePerLitreDiesel end
-    if self.fuelType == "LPG" then return RicksMLC_PayAtThePump.PricePerLitreLPG end
-    if self.fuelType == "Propane" then return RicksMLC_PayAtThePump.PricePerLitrePropane end
+    if not self.fuelType then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol end
+    if self.fuelType == "Gasoline" then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol end
+    if self.fuelType == "Diesel" then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitreDiesel end
+    if self.fuelType == "LPG" then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitreLPG end
+    if self.fuelType == "Propane" then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePropane end
 
     -- Default to the petrol price
-    return RicksMLC_PayAtThePump.PricePerLitrePetrol
+    return SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol
 end
 
 local function payForFuel(self)
@@ -509,7 +502,7 @@ end
 if getActivatedMods():contains("SimpleOverhaulTraitsAndOccupations") then
 
     require "SOTimedActions/SORefuelerTrait"
-    
+
     local function adjustForGasManagement(character, time)
         if character:HasTrait("GasManagement") then return time * 0.75 end
         return time
