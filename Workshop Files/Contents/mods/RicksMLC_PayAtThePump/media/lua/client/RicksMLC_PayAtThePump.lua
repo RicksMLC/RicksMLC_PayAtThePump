@@ -504,3 +504,77 @@ if getActivatedMods():contains("ugPHP") then
         end
     end
 end
+
+---------------------------------------------------------------------------------
+if getActivatedMods():contains("SimpleOverhaulTraitsAndOccupations") then
+
+    require "SOTimedActions/SORefuelerTrait"
+    
+    local function adjustForGasManagement(character, time)
+        if character:HasTrait("GasManagement") then return time * 0.75 end
+        return time
+    end
+
+    require "TimedActions/ISTakeFuel"
+    function ISTakeFuel:calcTimeToPump()
+        -- UGH: Copied from the Vanilla ISTakeFuel:start(). I don't like copying internal fn code, esp with magic numbers in them
+        local pumpCurrent = tonumber(self.fuelStation:getPipedFuelAmount())
+        local itemCurrent = math.floor(self.petrolCan:getUsedDelta() / self.petrolCan:getUseDelta() + 0.001)
+        local itemMax = math.floor(1 / self.petrolCan:getUseDelta() + 0.001)
+        local take = math.min(pumpCurrent, itemMax - itemCurrent)
+        local fuelRate = 50
+        if getActivatedMods():contains("FuelAPI") then
+            local Utils = require("FuelAPI/Utils")
+            fuelRate = Utils.GetSandboxFuelTransferSpeed()
+        end
+        return take * fuelRate
+    end
+
+    local overrideISTakeFuelStart = ISTakeFuel.start
+    function ISTakeFuel:start()
+        overrideISTakeFuelStart(self)
+        self.action:setTime(adjustForGasManagement(self.character, self:calcTimeToPump()))
+    end
+
+    require "TimedActions/ISAddGasolineToVehicle"
+    function ISAddGasolineToVehicle:calcTimeToPump()
+        -- UGH: Copied from the Vanilla ISAddGasolineToVehicle:start().
+        local add = self.part:getContainerCapacity() - self.tankStart
+        local take = math.min(add, self.itemStart * self.JerryCanLitres)
+        return take * 50
+    end
+
+    local overrideISAddGasolineToVehicleStart = ISAddGasolineToVehicle.start
+    function ISAddGasolineToVehicle:start()
+        overrideISAddGasolineToVehicleStart(self)
+        self.action:setTime(adjustForGasManagement(self.character, self:calcTimeToPump()))
+    end
+
+    require "Vehicles/TimedActions/ISTakeGasolineFromVehicle"
+    function ISTakeGasolineFromVehicle:calcTimeToPump()
+        local add = (1.0 - self.itemStart) * self.JerryCanLitres
+        local take = math.min(add, self.tankStart)
+        return take * 50
+    end
+
+    local overrideISTakeGasolineFromVehicleStart = ISTakeGasolineFromVehicle.start
+    function ISTakeGasolineFromVehicle:start()
+        overrideISTakeGasolineFromVehicleStart(self)
+        self.action:setTime(adjustForGasManagement(self.character, self:calcTimeToPump()))
+    end
+
+    require "Vehicles/TimedActions/ISRefuelFromGasPump"
+    function ISRefuelFromGasPump:calcTimeToPump()
+        -- UGH: Copied from the Vanilla ISRefuelFromGasPump:start().
+        local pumpLitresAvail = self.pumpStart * (Vehicles.JerryCanLitres / 8)
+        local tankLitresFree = self.part:getContainerCapacity() - self.tankStart
+        local takeLitres = math.min(tankLitresFree, pumpLitresAvail)
+        return takeLitres * 50
+    end
+
+    local overrideISRefuelFromGasPumpStart = ISRefuelFromGasPump.start
+    function ISRefuelFromGasPump:start()
+        overrideISRefuelFromGasPumpStart(self)
+        self.action:setTime(adjustForGasManagement(self.character, self:calcTimeToPump()))
+    end
+end
