@@ -260,7 +260,7 @@ local function payForFuel(self)
     local cost = roundMoney(self.deltaFuel * price, 2)
     if math.floor(cost * 100) > 0 then
         local change = reduceFunds(cost)
-        self.deltaFuel = self.deltaFuel - (cost - change) -- not really change, but we can't split Money, so this will reduce every whole dollar.
+        self.deltaFuel = self.deltaFuel - ((cost - change) / price) -- not really change, but we can't split Money, so this will reduce every whole dollar.
         local money = getPlayerMoney()
         if money.Cash + money.Credit <= 0 then
             self:forceStop()
@@ -353,6 +353,24 @@ function ISTakeFuel.update(self)
     overrideTakeFuelUpdate(self)
     updateFuelPurchase(self, self.itemStart, self.itemTarget)
 end
+
+-- -- Commented out code: start() and perform() are for checking the amount paid is correct. Test with a Credit Card.
+-- local overrideISTakeFuelStart = ISTakeFuel.start
+-- function ISTakeFuel.start(self)
+--     overrideISTakeFuelStart(self)
+--     self.fuelAmt = self.itemTarget - self.itemStart
+--     self.expectedCost = getPricePerLitre(self) * self.fuelAmt
+--     self.initMoney = getPlayerMoney().Credit
+-- end
+--
+-- local overrideISTakeFuelPerform = ISTakeFuel.perform
+-- function ISTakeFuel.perform(self)
+--     overrideISTakeFuelPerform(self)
+--     self.finalMoney = getPlayerMoney().Credit
+--     self.spentMoney = self.initMoney - self.finalMoney
+--     DebugLog.log(DebugType.Mod, "ISTakeFuel.perform() fuelAmt: " .. tostring(self.fuelAmt) .. ", exp cost: " .. tostring(self.expectedCost) .. " actual: " .. tostring(self.spentMoney))
+-- end
+
 
 local overrideISTakeFuelStop = ISTakeFuel.stop
 function ISTakeFuel.stop(self)
