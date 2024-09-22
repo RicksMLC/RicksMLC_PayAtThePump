@@ -22,5 +22,11 @@ Sandbox_CN = {
 	
 	Sandbox_RicksMLC_PayAtThePump_MinRandomCredit = "最低随机积分",
     Sandbox_RicksMLC_PayAtThePump_MinRandomCredit_tooltip = "信用卡在您取款时将拥有的最低随机 $ 余额。",
+	
+	Sandbox_RicksMLC_PayAtThePump_AllowMoney = "允许资金",
+    Sandbox_RicksMLC_PayAtThePump_AllowMoney_tooltip = "允许用钱支付燃料费",
+
+    Sandbox_RicksMLC_PayAtThePump_AllowCreditCards = "允许信用卡",
+    Sandbox_RicksMLC_PayAtThePump_AllowCreditCards_tooltip = "允许使用信用卡支付燃料费用",
 
 }

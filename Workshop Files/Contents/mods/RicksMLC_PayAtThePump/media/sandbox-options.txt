@@ -46,7 +46,7 @@ option RicksMLC_PayAtThePump.MinRandomCredit
 	type = double,
 	default = 3.69,
 	min = 0.01,
-	max = 10,
+	max = 250000,
 	page = RicksMLC_PayAtThePump,
 	translation = RicksMLC_PayAtThePump_MinRandomCredit,
 }
@@ -55,9 +55,25 @@ option RicksMLC_PayAtThePump.MaxRandomCredit
 {
 	type = double,
 	default = 120,
-	min = 11,
+	min = 0.01,
 	max = 250000,
 	page = RicksMLC_PayAtThePump,
 	translation = RicksMLC_PayAtThePump_MaxRandomCredit,
+}
+
+option RicksMLC_PayAtThePump.AllowMoney
+{
+	type = boolean,
+	default = true,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_AllowMoney,
+}
+
+option RicksMLC_PayAtThePump.AllowCreditCards
+{
+	type = boolean,
+	default = true,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_AllowCreditCards,
 }
 

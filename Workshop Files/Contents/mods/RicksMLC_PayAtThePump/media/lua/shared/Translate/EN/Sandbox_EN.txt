@@ -18,4 +18,11 @@ Sandbox_EN = {
 
     Sandbox_RicksMLC_PayAtThePump_MinRandomCredit = "Min Random Credit",
     Sandbox_RicksMLC_PayAtThePump_MinRandomCredit_tooltip = "The minimum random $ balance a Credit Card will have when you pick it up.",
+
+    Sandbox_RicksMLC_PayAtThePump_AllowMoney = "Allow Money",
+    Sandbox_RicksMLC_PayAtThePump_AllowMoney_tooltip = "Allowed to use Money to pay for fuel",
+
+    Sandbox_RicksMLC_PayAtThePump_AllowCreditCards = "Allow Credit Cards",
+    Sandbox_RicksMLC_PayAtThePump_AllowCreditCards_tooltip = "Allowed to use Credit Cards to pay for fuel",
+
 }

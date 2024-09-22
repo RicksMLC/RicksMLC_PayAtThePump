@@ -21,5 +21,11 @@ Sandbox_PT = {
 	
 	Sandbox_RicksMLC_PayAtThePump_MinRandomCredit = "Min Crédito Aleatório",
     Sandbox_RicksMLC_PayAtThePump_MinRandomCredit_tooltip = "O saldo mínimo aleatório de $ que um cartão de crédito terá quando você pegá-lo.",
+	
+	Sandbox_RicksMLC_PayAtThePump_AllowMoney = "Permitir dinheiro",
+    Sandbox_RicksMLC_PayAtThePump_AllowMoney_tooltip = "Permitido usar dinheiro para pagar combustível",
+
+    Sandbox_RicksMLC_PayAtThePump_AllowCreditCards = "Permitir Cartões de Crédito",
+    Sandbox_RicksMLC_PayAtThePump_AllowCreditCards_tooltip = "Permitido usar cartões de crédito para pagar combustível",
 
 }

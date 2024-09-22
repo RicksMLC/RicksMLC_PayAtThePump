@@ -28,14 +28,17 @@
 RicksMLC_PayAtThePump = {}
 
 local function findMoneyClosure(x, obj)
-    local matchItem = x:getType() == "Money" or string.find(x:getType(), "CreditCard")
+    local matchItem = ((SandboxVars.RicksMLC_PayAtThePump.AllowMoney and x:getType() == "Money")
+                    or (SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards and string.find(x:getType(), "CreditCard")))
+    -- Note: I don't know why, but tostring(matchItem) is "true" or "false", but if I just return it it is always false (or fail)
+    -- So use 'if matchItem then true end' to force it to return true/false. 
     if matchItem then
         return true
     end
-    return false
+    return false            
 end
 
-local function getPlayerMoney()
+function RicksMLC_PayAtThePump.getPlayerMoney()
     local itemContainer = getPlayer():getInventory()
     local itemList = itemContainer:getAllEval(findMoneyClosure)
     local cashOnHand = 0
@@ -66,7 +69,7 @@ local function addOrReplaceAfterColon(inputString, addString)
 end
 
 
-local function changeCreditBalance(creditCard, amount)
+function RicksMLC_PayAtThePump.changeCreditBalance(creditCard, amount)
     local modData = creditCard:getModData()["RicksMLC_CreditCardz"]
     local remainAmount = 0
 
@@ -90,18 +93,20 @@ local function changeCreditBalance(creditCard, amount)
     return remainAmount
 end
 
-local function findValidCreditCardClosure(x)
+function RicksMLC_PayAtThePump.findValidCreditCardClosure(x)
     return (string.find(x:getType(), "CreditCard") ~= nil 
             and x:getModData()["RicksMLC_CreditCardz"]
             and x:getModData()["RicksMLC_CreditCardz"].Balance > 0)
 end 
 
 local function reduceCreditBalances(amount)
+    if not SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards then return amount end
+
     local itemContainer = getPlayer():getInventory()
-    local itemList = itemContainer:getAllEval(findValidCreditCardClosure)
+    local itemList = itemContainer:getAllEval(RicksMLC_PayAtThePump.findValidCreditCardClosure)
     if not itemList:isEmpty() then
         for i = 0, itemList:size()-1 do 
-            amount = changeCreditBalance(itemList:get(i), -amount)
+            amount = RicksMLC_PayAtThePump.changeCreditBalance(itemList:get(i), -amount)
             if amount <= 0 then return 0 end
         end
     end
@@ -110,6 +115,8 @@ end
 
 local function reduceCash(amount)
     -- Credit cards exhaused, resort to cash:
+    if not SandboxVars.RicksMLC_PayAtThePump.AllowMoney then return end
+
     local itemContainer = getPlayer():getInventory()
     local itemList = itemContainer:getAllType("Money")
     if not itemList:isEmpty() then
@@ -147,6 +154,8 @@ local function reduceFunds(amount)
 end
 
 local function AddRandomCredit(n)
+    if not SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards then return end
+
     local itemContainer = getPlayer():getInventory()
     local itemList = itemContainer:getAllTypeRecurse("CreditCard")
     local thought = "New Balance:"
@@ -158,8 +167,8 @@ local function AddRandomCredit(n)
         end
     end
     Think(getPlayer(), thought, 1)
-    local money = getPlayerMoney()
-    DebugLog.log(DebugType.Mod, "AddRandomCredit() Money avail: Cash: " .. tostring(money.Cash) .. " Credit: " .. tostring(money.Credit))
+    local money = RicksMLC_PayAtThePump.getPlayerMoney()
+    --DebugLog.log(DebugType.Mod, "AddRandomCredit() Money avail: Cash: " .. tostring(money.Cash) .. " Credit: " .. tostring(money.Credit))
 end
 
 
@@ -199,13 +208,15 @@ local function InitAnyCreditCards(character)
     for i = 0, itemList:size()-1 do 
         local initBalance = ZombRand(SandboxVars.RicksMLC_PayAtThePump.MinRandomCredit, SandboxVars.RicksMLC_PayAtThePump.MaxRandomCredit)
         adjustValueByOtherModsCardType(itemList:get(i), initBalance)
-        changeCreditBalance(itemList:get(i), initBalance)
+        RicksMLC_PayAtThePump.changeCreditBalance(itemList:get(i), initBalance)
     end
 end
 
 local origTransferFn = ISInventoryTransferAction.perform
 function ISInventoryTransferAction.perform(self)
     origTransferFn(self)
+
+    if not SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards then return end
 
     -- Only check if adding to the charcter inventory.  We don't care about removing things from the character
     -- or transferring from one container to another (eg inventory -> backpack)
@@ -261,7 +272,7 @@ local function payForFuel(self)
     if math.floor(cost * 100) > 0 then
         local change = reduceFunds(cost)
         self.deltaFuel = self.deltaFuel - ((cost - change) / price) -- not really change, but we can't split Money, so this will reduce every whole dollar.
-        local money = getPlayerMoney()
+        local money = RicksMLC_PayAtThePump.getPlayerMoney()
         if money.Cash + money.Credit <= 0 then
             self:forceStop()
         end
@@ -297,7 +308,7 @@ local function handleEmergencyStop(self)
         if cost > 0.01 then
             local change = reduceFunds(cost)
             if change > 0 then
-                local money = getPlayerMoney()
+                local money = RicksMLC_PayAtThePump.getPlayerMoney()
                 if money.Cash > 0 then
                     reduceFunds(1) -- no freebies.
                 end
@@ -360,13 +371,13 @@ end
 --     overrideISTakeFuelStart(self)
 --     self.fuelAmt = self.itemTarget - self.itemStart
 --     self.expectedCost = getPricePerLitre(self) * self.fuelAmt
---     self.initMoney = getPlayerMoney().Credit
+--     self.initMoney = RicksMLC_PayAtThePump.getPlayerMoney().Credit
 -- end
 --
 -- local overrideISTakeFuelPerform = ISTakeFuel.perform
 -- function ISTakeFuel.perform(self)
 --     overrideISTakeFuelPerform(self)
---     self.finalMoney = getPlayerMoney().Credit
+--     self.finalMoney = RicksMLC_PayAtThePump.getPlayerMoney().Credit
 --     self.spentMoney = self.initMoney - self.finalMoney
 --     DebugLog.log(DebugType.Mod, "ISTakeFuel.perform() fuelAmt: " .. tostring(self.fuelAmt) .. ", exp cost: " .. tostring(self.expectedCost) .. " actual: " .. tostring(self.spentMoney))
 -- end
