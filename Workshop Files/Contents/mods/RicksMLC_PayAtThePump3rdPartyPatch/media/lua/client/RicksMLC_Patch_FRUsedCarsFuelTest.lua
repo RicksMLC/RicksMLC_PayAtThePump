@@ -6,7 +6,7 @@
 --
 -- Remove the FR :start() method by replacing it with the original vanilla function.
 
-if not getActivatedMods():contains("FRUsedCarsFT") then return end
+if not (getActivatedMods():contains("FRUsedCarsFT") or getActivatedMods():contains("PzkVanillaPlusCarPack")) then return end
 
 require "Vehicles/TimedActions/ISRefuelFromGasPump"
 local origVanillaStart = ISRefuelFromGasPump.start
