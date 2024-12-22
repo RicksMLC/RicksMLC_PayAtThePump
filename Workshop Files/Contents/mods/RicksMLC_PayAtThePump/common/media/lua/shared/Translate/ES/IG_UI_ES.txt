@@ -1,0 +1,6 @@
+-- Rick's MLC Pay At The Pump
+-- Encoding: ANSI
+
+IGUI_ES {
+	IGUI_RicksMLC_PayAtThePump = "�Ow! �Mi cabeza!",
+},

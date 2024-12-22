@@ -1,0 +1,79 @@
+VERSION = 1,
+
+option RicksMLC_PayAtThePump.PricePerLitrePetrol
+{
+	type = double,
+	default = 0.26,
+	min = 0.01,
+	max = 10000.0,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_PricePerLitrePetrol,
+}
+
+option RicksMLC_PayAtThePump.PricePerLitreDiesel
+{
+	type = double,
+	default = 0.28,
+	min = 0.01,
+	max = 10000.0,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_PricePerLitreDiesel,
+}
+
+option RicksMLC_PayAtThePump.PricePerLitreLPG
+{
+	type = double,
+	default = 0.29,
+	min = 0.01,
+	max = 10000.0,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_PricePerLitreLPG,
+}
+
+option RicksMLC_PayAtThePump.PricePerLitrePropane
+{
+	type = double,
+	default = 0.27,
+	min = 0.01,
+	max = 10000.0,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_PricePerLitrePropane,
+}
+
+
+option RicksMLC_PayAtThePump.MinRandomCredit
+{
+	type = double,
+	default = 3.69,
+	min = 0.01,
+	max = 250000,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_MinRandomCredit,
+}
+
+option RicksMLC_PayAtThePump.MaxRandomCredit
+{
+	type = double,
+	default = 120,
+	min = 0.01,
+	max = 250000,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_MaxRandomCredit,
+}
+
+option RicksMLC_PayAtThePump.AllowMoney
+{
+	type = boolean,
+	default = true,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_AllowMoney,
+}
+
+option RicksMLC_PayAtThePump.AllowCreditCards
+{
+	type = boolean,
+	default = true,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_AllowCreditCards,
+}
+

@@ -1,0 +1,30 @@
+-- Rick's MLC Pay At The Pump
+-- Encoding: ANSI
+
+Sandbox_ES = {
+    Sandbox_RicksMLC_PayAtThePump = "Rick's MLC Pagar en la gasolina",
+
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePetrol = "Precio por litro (Gasolina)",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePetrol_tooltip = "Precio por litro de gasolina en el surtidor.  El precio medio en Estados Unidos era de 0,26 dólares por litro en 1993. Este es el precio predeterminado del combustible en el juego base de Project Zomboid.",
+
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreDiesel = "Precio por litro (Diesel)",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreDiesel_tooltip = "Treads Fuel API: Precio por litro de diésel en el surtidor.  El precio medio en los Estados Unidos era de 0,28 dólares por litro en 1993.",
+
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreLPG = "Precio por litro (GLP)",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitreLPG_tooltip = "Treads Fuel API: Precio por litro de GLP en el surtidor.  El precio medio en los Estados Unidos fue de 0,29 dólares por litro en 1993.",
+
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePropane = "Precio por litro (propano)",
+    Sandbox_RicksMLC_PayAtThePump_PricePerLitrePropane_tooltip = "Las bombas tienen propano: Precio por litro de propano.  El precio medio en los Estados Unidos fue de 0,27 dólares por litro en 1993.",
+
+    Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit = "Crédito aleatorio máximo",
+    Sandbox_RicksMLC_PayAtThePump_MaxRandomCredit_tooltip = "El saldo máximo aleatorio en $ que tendrá una tarjeta de crédito cuando se recoja.",
+	
+	Sandbox_RicksMLC_PayAtThePump_MinRandomCredit = "Crédito aleatorio mínimo",
+    Sandbox_RicksMLC_PayAtThePump_MinRandomCredit_tooltip = "El saldo mínimo aleatorio en $ que tendrá una tarjeta de crédito cuando se recoja.",
+
+	Sandbox_RicksMLC_PayAtThePump_AllowMoney = "Permitir dinero",
+    Sandbox_RicksMLC_PayAtThePump_AllowMoney_tooltip = "Se le permite usar dinero para pagar el combustible",
+
+    Sandbox_RicksMLC_PayAtThePump_AllowCreditCards = "Permitir tarjetas de crédito",
+    Sandbox_RicksMLC_PayAtThePump_AllowCreditCards_tooltip = "Se permite el uso de tarjetas de crédito para pagar el combustible",
+}

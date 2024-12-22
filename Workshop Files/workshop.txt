@@ -11,5 +11,6 @@ description=
 description= This mod is @Nightscale's fault; many thanks for the idea and the specification.
 description= Many thanks to @Khontac for assistance and advice in designing the payments handling from the inventory. 
 description=
+description= Include the RicksMLC_PayAtThePump3rdPartyPatch if you use Treads and/or FuelAPI.  This patch fixes a compatibility issue between Pay At The Pump and Treads and FuelAPI mods.
 tags=Build 41
 visibility=public
