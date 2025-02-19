@@ -77,3 +77,11 @@ option RicksMLC_PayAtThePump.AllowCreditCards
 	translation = RicksMLC_PayAtThePump_AllowCreditCards,
 }
 
+option RicksMLC_PayAtThePump.AutoSearchForMoney
+{
+	type = boolean,
+	default = false,
+	page = RicksMLC_PayAtThePump,
+	translation = RicksMLC_PayAtThePump_AutoSearchForMoney,
+}
+
