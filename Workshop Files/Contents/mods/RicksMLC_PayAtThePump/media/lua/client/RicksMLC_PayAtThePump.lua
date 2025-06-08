@@ -29,7 +29,7 @@ RicksMLC_PayAtThePump = {}
 
 local function findMoneyClosure(x, obj)
     local matchItem = ((SandboxVars.RicksMLC_PayAtThePump.AllowMoney and x:getType() == "Money")
-                    or (SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards and string.find(x:getType(), "CreditCard")))
+                    or (SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards and RicksMLC_PayAtThePump.findValidCreditCardClosure(x)))
     -- Note: I don't know why, but tostring(matchItem) is "true" or "false", but if I just return it it is always false (or fail)
     -- So use 'if matchItem then true end' to force it to return true/false. 
     if matchItem then
@@ -41,6 +41,9 @@ end
 function RicksMLC_PayAtThePump.getPlayerMoney()
     local itemContainer = getPlayer():getInventory()
     local itemList = itemContainer:getAllEval(findMoneyClosure)
+    if (SandboxVars.RicksMLC_PayAtThePump.AutoSearchForMoney and itemList:isEmpty()) then
+        itemList = itemContainer:getAllEvalRecurse(findMoneyClosure)
+    end
     local cashOnHand = 0
     local credit = 0
     if not itemList:isEmpty() then
@@ -104,6 +107,9 @@ local function reduceCreditBalances(amount)
 
     local itemContainer = getPlayer():getInventory()
     local itemList = itemContainer:getAllEval(RicksMLC_PayAtThePump.findValidCreditCardClosure)
+    if (SandboxVars.RicksMLC_PayAtThePump.AutoSearchForMoney and itemList:isEmpty()) then
+        itemList = itemContainer:getAllEvalRecurse(RicksMLC_PayAtThePump.findValidCreditCardClosure)
+    end
     if not itemList:isEmpty() then
         for i = 0, itemList:size()-1 do 
             amount = RicksMLC_PayAtThePump.changeCreditBalance(itemList:get(i), -amount)
@@ -119,9 +125,14 @@ local function reduceCash(amount)
 
     local itemContainer = getPlayer():getInventory()
     local itemList = itemContainer:getAllType("Money")
+    if (SandboxVars.RicksMLC_PayAtThePump.AutoSearchForMoney and itemList:isEmpty()) then
+        itemList = itemContainer:getAllTypeRecurse("Money")
+    end    
     if not itemList:isEmpty() then
         for i = 0, itemList:size()-1 do 
-            itemContainer:DoRemoveItem(itemList:get(i))
+            local item = itemList:get(i) 
+            local realItemContainer = item:getContainer() -- The actual container may be a subcontainer like a bag in the inventory
+            realItemContainer:DoRemoveItem(item)
             amount = amount - 1
             if amount <= 0 then return end
         end

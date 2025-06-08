@@ -29,4 +29,6 @@ Sandbox_CN = {
     Sandbox_RicksMLC_PayAtThePump_AllowCreditCards = "允许信用卡",
     Sandbox_RicksMLC_PayAtThePump_AllowCreditCards_tooltip = "允许使用信用卡支付燃料费用",
 
+	Sandbox_RicksMLC_PayAtThePump_AutoSearchForMoney = "自动搜索基金",
+	Sandbox_RicksMLC_PayAtThePump_AutoSearchForMoney_tooltip = "自动搜索库存以支付燃料费用。 这是为那些不想在一大群僵尸接近他们的加油站时不顾一切地在他们的包/钱包中寻找钱并将其转移到他们的主要库存中的玩家准备的。",
 }

@@ -25,4 +25,6 @@ Sandbox_EN = {
     Sandbox_RicksMLC_PayAtThePump_AllowCreditCards = "Allow Credit Cards",
     Sandbox_RicksMLC_PayAtThePump_AllowCreditCards_tooltip = "Allowed to use Credit Cards to pay for fuel",
 
+	Sandbox_RicksMLC_PayAtThePump_AutoSearchForMoney = "Auto Search For Funds",
+	Sandbox_RicksMLC_PayAtThePump_AutoSearchForMoney_tooltip = "Automatically search the inventory for funds to pay for fuel.  This is for playes who do not wish to desparately search their bags/wallets for money and move it into their main inventory while a horde of zombies are closing in on their fuel pump.",
 }

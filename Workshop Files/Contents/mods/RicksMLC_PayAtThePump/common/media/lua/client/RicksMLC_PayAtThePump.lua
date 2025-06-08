@@ -27,7 +27,9 @@
 
 RicksMLC_PayAtThePump = {}
 
-local function findMoneyClosure(x, obj)
+RicksMLC_PayAtPumpAPI = {}
+
+function RicksMLC_PayAtPumpAPI.findMoneyClosure(x, obj)
     local matchItem = ((SandboxVars.RicksMLC_PayAtThePump.AllowMoney and x:getType() == "Money")
                     or (SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards and RicksMLC_PayAtThePump.findValidCreditCardClosure(x)))
     -- Note: I don't know why, but tostring(matchItem) is "true" or "false", but if I just return it it is always false (or fail)
@@ -40,9 +42,9 @@ end
 
 function RicksMLC_PayAtThePump.getPlayerMoney()
     local itemContainer = getPlayer():getInventory()
-    local itemList = itemContainer:getAllEval(findMoneyClosure)
+    local itemList = itemContainer:getAllEval(RicksMLC_PayAtPumpAPI.findMoneyClosure)
     if (SandboxVars.RicksMLC_PayAtThePump.AutoSearchForMoney and itemList:isEmpty()) then
-        itemList = itemContainer:getAllEvalRecurse(findMoneyClosure)
+        itemList = itemContainer:getAllEvalRecurse(RicksMLC_PayAtPumpAPI.findMoneyClosure)
     end
     local cashOnHand = 0
     local credit = 0
@@ -115,7 +117,7 @@ function RicksMLC_PayAtThePump.findValidCreditCardClosure(x)
             and x:getModData()["RicksMLC_CreditCardz"].Balance > 0)
 end 
 
-local function reduceCreditBalances(amount)
+function RicksMLC_PayAtPumpAPI.reduceCreditBalances(amount)
     if not SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards then return amount end
 
     local itemContainer = getPlayer():getInventory()
@@ -132,7 +134,7 @@ local function reduceCreditBalances(amount)
     return amount
 end
 
-local function reduceCash(amount)
+function RicksMLC_PayAtPumpAPI.reduceCash(amount)
     -- Credit cards exhaused, resort to cash:
     if not SandboxVars.RicksMLC_PayAtThePump.AllowMoney then return end
 
@@ -162,9 +164,9 @@ local function Think(player, thought, colourNum)
     player:setHaloNote(thought, r[colourNum] * 255, g[colourNum] * 255, b[colourNum] * 255, 250)
 end
 
-local function reduceFunds(amount)
+function RicksMLC_PayAtPumpAPI.reduceFunds(amount)
     -- reduce the credit cards before cash:
-    amount = reduceCreditBalances(amount)
+    amount = RicksMLC_PayAtPumpAPI.reduceCreditBalances(amount)
 
     if amount <= 0 then return 0 end
 
@@ -172,12 +174,12 @@ local function reduceFunds(amount)
 
     -- Cash is the last resort - can only use whole numbers
     if math.floor(amount) > 0 then
-        reduceCash(math.floor(amount))
+        RicksMLC_PayAtPumpAPI.reduceCash(math.floor(amount))
     end
     return amount - math.floor(amount) -- return the excess cents for the next charge
 end
 
-local function AddRandomCredit(n)
+function RicksMLC_PayAtPumpAPI.AddRandomCredit(n)
     if not SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards then return end
 
     local itemContainer = getPlayer():getInventory()
@@ -196,20 +198,20 @@ local function AddRandomCredit(n)
 end
 
 
-local function AddCredit(key)
+function RicksMLC_PayAtPumpAPI.AddCredit(key)
     if key == Keyboard.KEY_Q then
         -- Shout us some more credit
-        AddRandomCredit(10)
+        RicksMLC_PayAtPumpAPI.AddRandomCredit(10)
     end
 end
---Events.OnKeyPressed.Add(AddCredit)
+--Events.OnKeyPressed.Add(RicksMLC_PayAtPumpAPI.AddCredit)
 
 --------------------------------------------
 -- Detect if a credit card is picked up.
 
 require "TimedActions/ISInventoryTransferAction"
 
-local function adjustValueByOtherModsCardType(creditCard, initAmount)
+function RicksMLC_PayAtPumpAPI.adjustValueByOtherModsCardType(creditCard, initAmount)
     -- CreditCardPlus compatibility: silver < black < gold
     if creditCard:getType() == "CreditCard3" then return initAmount * 0.50 end -- silver
     if creditCard:getType() == "CreditCard4" then return initAmount * 2.75 end -- gold
@@ -221,17 +223,17 @@ local function adjustValueByOtherModsCardType(creditCard, initAmount)
     return initAmount
 end
 
-local function detectNewCreditCardClosure(x)
+function RicksMLC_PayAtPumpAPI.detectNewCreditCardClosure(x)
     return (string.find(x:getType(), "CreditCard") ~= nil and x:getModData()["RicksMLC_CreditCardz"] == nil)
 end 
 
-local function InitAnyCreditCards(character)
+function RicksMLC_PayAtPumpAPI.InitAnyCreditCards(character)
     local itemContainer = character:getInventory()
-    local itemList = itemContainer:getAllEvalRecurse(detectNewCreditCardClosure)
+    local itemList = itemContainer:getAllEvalRecurse(RicksMLC_PayAtPumpAPI.detectNewCreditCardClosure)
     if not itemList then return end
     for i = 0, itemList:size()-1 do 
         local initBalance = ZombRand(SandboxVars.RicksMLC_PayAtThePump.MinRandomCredit, SandboxVars.RicksMLC_PayAtThePump.MaxRandomCredit)
-        adjustValueByOtherModsCardType(itemList:get(i), initBalance)
+        RicksMLC_PayAtPumpAPI.adjustValueByOtherModsCardType(itemList:get(i), initBalance)
         RicksMLC_PayAtThePump.changeCreditBalance(itemList:get(i), initBalance)
     end
 end
@@ -249,7 +251,7 @@ function ISInventoryTransferAction.perform(self)
     end
     -- Check if the destination container is the character
     if self.destContainer == self.character:getInventory() or self.destContainer:isInCharacterInventory(self.character) then
-        InitAnyCreditCards(self.character)
+        RicksMLC_PayAtPumpAPI.InitAnyCreditCards(self.character)
     end
 end
 
@@ -257,7 +259,7 @@ end
 -- The actual RefuelFromGasPump code is quite small compared to the economic system above.
 
 -- General init and update handlers
-local function initPurchaseFuel(self)
+function RicksMLC_PayAtPumpAPI.initPurchaseFuel(self)
     local textureName = self.fuelStation:getTextureName()
     -- Vanilla gas pump textures eg:
     -- location_shop_fossoil_01_14
@@ -274,12 +276,12 @@ local function initPurchaseFuel(self)
     return self
 end
 
-local function roundMoney(num, decimalPlaces)
+function RicksMLC_PayAtPumpAPI.roundMoney(num, decimalPlaces)
     local mult = 10^(decimalPlaces or 0)
     return math.floor(num * mult + 0.5) / mult
 end
 
-local function getPricePerLitre(self)
+function RicksMLC_PayAtPumpAPI.getPricePerLitre(self)
     if not self.fuelType then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol end
     if self.fuelType == "Gasoline" then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol end
     if self.fuelType == "Diesel" then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitreDiesel end
@@ -290,11 +292,11 @@ local function getPricePerLitre(self)
     return SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol
 end
 
-local function payForFuel(self)
-    local price = getPricePerLitre(self)
-    local cost = roundMoney(self.deltaFuel * price, 2)
+function RicksMLC_PayAtPumpAPI.payForFuel(self)
+    local price = RicksMLC_PayAtPumpAPI.getPricePerLitre(self)
+    local cost = RicksMLC_PayAtPumpAPI.roundMoney(self.deltaFuel * price, 2)
     if math.floor(cost * 100) > 0 then
-        local change = reduceFunds(cost)
+        local change = RicksMLC_PayAtPumpAPI.reduceFunds(cost)
         self.deltaFuel = self.deltaFuel - ((cost - change) / price) -- not really change, but we can't split Money, so this will reduce every whole dollar.
         local money = RicksMLC_PayAtThePump.getPlayerMoney()
         if money.Cash + money.Credit <= 0 then
@@ -303,14 +305,14 @@ local function payForFuel(self)
     end    
 end
 
--- updateFuelPurchase
+-- RicksMLC_PayAtPumpAPI.updateFuelPurchase
 -- @param self  TimedAction object
 -- @param startOrAmt Start amount of fuel / fuel in this update if target is nil
 -- @param target Target amount of fuel.
 -- The amount of fuel purchased is calculated from the start amount in the tank and the target amount at the end of the TA
 -- and the time so far (getJobDelta()).  
 -- If target is nil, the startOrAmt is the amount purchased in this update call.
-local function updateFuelPurchase(self, startOrAmt, target)
+function RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, startOrAmt, target)
     if not self.isFuelPump then return end
 
     if target then
@@ -320,21 +322,21 @@ local function updateFuelPurchase(self, startOrAmt, target)
     end
     self.deltaFuel = self.deltaFuel + self.fuelPurchased - self.prevFuelPurchased
     self.prevFuelPurchased = self.fuelPurchased
-    payForFuel(self)
+    RicksMLC_PayAtPumpAPI.payForFuel(self)
 end
 
-local function handleEmergencyStop(self)
+function RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
     if not self.isFuelPump then return end
 
     if self.deltaFuel > 0 then
-        local price = getPricePerLitre(self)
-        local cost = roundMoney(self.deltaFuel * price, 2)
+        local price = RicksMLC_PayAtPumpAPI.getPricePerLitre(self)
+        local cost = RicksMLC_PayAtPumpAPI.roundMoney(self.deltaFuel * price, 2)
         if cost > 0.01 then
-            local change = reduceFunds(cost)
+            local change = RicksMLC_PayAtPumpAPI.reduceFunds(cost)
             if change > 0 then
                 local money = RicksMLC_PayAtThePump.getPlayerMoney()
                 if money.Cash > 0 then
-                    reduceFunds(1) -- no freebies.
+                    RicksMLC_PayAtPumpAPI.reduceFunds(1) -- no freebies.
                 end
             end
         end
@@ -342,24 +344,33 @@ local function handleEmergencyStop(self)
 end
 
 -----------------------------------------
+-- Note for modders: To add mod support for your fuel handling there are three API methods to call:
+--   RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
+--      Call in the :new() Check the source is a fuel pump and initialise the pay amounts.
+--   RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.tankStart, self.tankTarget)
+--      Call in :update(). Check the funds balance and reduce any credit card funds by the delta fuel amount.
+--      Note that the :perform() is not needed as the funds balance checking and reducing is handled in updateFuelPurchase.
+--   RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+--      Call in :stop().   Handle the take fuel action abort state by finishing the payment of the final amount.
+-----------------------------------------
 require "Vehicles/TimedActions/ISRefuelFromGasPump"
 
 local overrideISRefuelFromGasPumpNew = ISRefuelFromGasPump.new
 function ISRefuelFromGasPump:new(character, part, fuelStation, time)
     local this = overrideISRefuelFromGasPumpNew(self, character, part, fuelStation, time)
-    initPurchaseFuel(this)
+    RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
     return this
 end
 
 local overrideISRefuelFromGasPumpUpdate = ISRefuelFromGasPump.update
 function ISRefuelFromGasPump.update(self)
     overrideISRefuelFromGasPumpUpdate(self)
-    updateFuelPurchase(self, self.tankStart, self.tankTarget)
+    RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.tankStart, self.tankTarget)
 end
 
 local overrideStop = ISRefuelFromGasPump.stop
 function ISRefuelFromGasPump.stop(self)
-    handleEmergencyStop(self)
+    RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
     overrideStop(self)
 end
 
@@ -370,7 +381,7 @@ if getActivatedMods():contains("TreadsFuelTypesFramework") then
     local overrideFuelAPI_ISTakeFuelNew = ISTakeFuel.new
     function ISTakeFuel:new(character, fuelStation, petrolCan, time, fuelType)
         local this = overrideFuelAPI_ISTakeFuelNew(self, character, fuelStation, petrolCan, time, fuelType)
-        initPurchaseFuel(this)
+        RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
         return this
     end
 else
@@ -378,7 +389,7 @@ else
     local overrideISTakeFuelNew = ISTakeFuel.new
     function ISTakeFuel:new(character, fuelStation, petrolCan, time)
         local this = overrideISTakeFuelNew(self, character, fuelStation, petrolCan, time)
-        initPurchaseFuel(this)
+        RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
         return this
     end
 end
@@ -386,7 +397,7 @@ end
 local overrideTakeFuelUpdate = ISTakeFuel.update
 function ISTakeFuel.update(self)
     overrideTakeFuelUpdate(self)
-    updateFuelPurchase(self, self.itemStart, self.itemTarget)
+    RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.itemStart, self.itemTarget)
 end
 
 -- -- Commented out code: start() and perform() are for checking the amount paid is correct. Test with a Credit Card.
@@ -394,7 +405,7 @@ end
 -- function ISTakeFuel.start(self)
 --     overrideISTakeFuelStart(self)
 --     self.fuelAmt = self.itemTarget - self.itemStart
---     self.expectedCost = getPricePerLitre(self) * self.fuelAmt
+--     self.expectedCost = RicksMLC_PayAtPumpAPI.getPricePerLitre(self) * self.fuelAmt
 --     self.initMoney = RicksMLC_PayAtThePump.getPlayerMoney().Credit
 -- end
 --
@@ -409,7 +420,7 @@ end
 
 local overrideISTakeFuelStop = ISTakeFuel.stop
 function ISTakeFuel.stop(self)
-    handleEmergencyStop(self)
+    RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
     overrideISTakeFuelStop(self)
 end
 
@@ -428,19 +439,19 @@ if getActivatedMods():contains("TreadsFuelTypesFramework") then
         local ovrrideISPumpFuelToBarrelNew = ISPumpFuelToBarrel.new
         function ISPumpFuelToBarrel:new(character, part, fuelStation, time)
             local this = ovrrideISPumpFuelToBarrelNew(self, character, part, fuelStation, time)
-            initPurchaseFuel(this)
+            RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
             return this
         end
 
         local ovrrideISPumpFuelToBarrelUpdate = ISTakeFuel.update
         function ISPumpFuelToBarrel.update(self)
             overrideTakeFuelUpdate(self)
-            updateFuelPurchase(self, self.barrelStart, self.barrelTarget)
+            RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.barrelStart, self.barrelTarget)
         end
 
         local ovrrideISPumpFuelToBarrelStop = ISTakeFuel.stop
         function ISPumpFuelToBarrel.stop(self)
-            handleEmergencyStop(self)
+            RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
             ovrrideISPumpFuelToBarrelStop(self)
         end
     end
@@ -451,19 +462,19 @@ if getActivatedMods():contains("TreadsFuelTypesFramework") then
         local overrideISRefuelFromGasPumpRSFuelNew = ISRefuelFromGasPumpRSFuel.new
         function ISRefuelFromGasPumpRSFuel:new(character, part, fuelStation, fuelType, time)
             local this = overrideISRefuelFromGasPumpRSFuelNew(self, character, part, fuelStation, fuelType, time)
-            initPurchaseFuel(this)
+            RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
             return this
         end
 
         local overrideISRefuelFromGasPumpRSFuelUpdate = ISRefuelFromGasPumpRSFuel.update
         function ISRefuelFromGasPumpRSFuel:update()
             overrideISRefuelFromGasPumpRSFuelUpdate(self)
-            updateFuelPurchase(self, self.tankStart, self.tankTarget)
+            RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.tankStart, self.tankTarget)
         end
 
         local overrideISRefuelFromGasPumpRSFuelStop = ISRefuelFromGasPumpRSFuel.stop
         function ISRefuelFromGasPumpRSFuel:stop()
-            handleEmergencyStop(self)
+            RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
             overrideISRefuelFromGasPumpRSFuelStop(self)
         end
     end
@@ -481,7 +492,7 @@ if getActivatedMods():contains("ugPHP") then
     --     function UGFillLargeTank:new(propanetankobject, character, time)
     --         local this = overrideUGFillLargeTankNew(self, propanetankobject, character, time)
     --         this.fuelStation = FindNearbyGasPump(propanetankobject) -- This function is defined in ISUI/UGTakePropaneMenu
-    --         initPurchaseFuel(this)
+    --         RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
     --         return this
     --     end
     --
@@ -491,13 +502,13 @@ if getActivatedMods():contains("ugPHP") then
     --         overrideUGFillLargeTankUpdate(self)
     --         local tankNew = self.propanetankobjectdata.PropaneContent
     --         if tankNew > tankStart then
-    --             updateFuelPurchase(self, tankNew - tankStart)
+    --             RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, tankNew - tankStart)
     --         end
     --     end
     --
     --     local overrideUGFillLargeTankStop = UGFillLargeTank.stop
     --     function UGFillLargeTank:stop()
-    --         handleEmergencyStop(self)
+    --         RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
     --         overrideUGFillLargeTankStop(self)
     --     end
     -- end
@@ -509,19 +520,19 @@ if getActivatedMods():contains("ugPHP") then
             local this = overrideUGFillPropaneTruckNew(self, part, character, time)
             this.fuelStation = ISVehiclePartMenu.getNearbyFuelPump(part:getVehicle())
             this.fuelType = "Propane"
-            initPurchaseFuel(this)
+            RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
             return this
         end
 
         local overrideUGFillPropaneTruckUpdate = UGFillPropaneTruck.update
         function UGFillPropaneTruck:update()
             overrideUGFillPropaneTruckUpdate(self)
-            updateFuelPurchase(self, self.part:getContainerContentAmount() - self.tankStart)
+            RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.part:getContainerContentAmount() - self.tankStart)
         end
 
         local overrideUGFillPropaneTruckStop = UGFillPropaneTruck.stop
         function UGFillPropaneTruck:stop()
-            handleEmergencyStop(self)
+            RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
             overrideUGFillPropaneTruckStop(self)
         end
     end
@@ -533,19 +544,19 @@ if getActivatedMods():contains("ugPHP") then
             local this = overrideUGTakePropaneNew(self, pump, tank, player, time, duration, istorch)
             this.fuelStation = pump -- The UGTakePropane does not inherit from ISTakeFuel therefore is missing its self.fuelStation
             this.fuelType = "Propane"
-            initPurchaseFuel(this)
+            RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
             return this
         end
 
         local overrideUGTakePropaneUpdate = UGTakePropane.update
         function UGTakePropane:update()
             overrideUGTakePropaneUpdate(self)
-            updateFuelPurchase(self, self.itemStart, self.itemTarget)
+            RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.itemStart, self.itemTarget)
         end
 
         local overrideUGTakePropaneStop = UGTakePropane.stop
         function UGTakePropane:stop()
-            handleEmergencyStop(self)
+            RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
             overrideUGTakePropaneStop(self)
         end
     end
