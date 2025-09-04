@@ -86,7 +86,6 @@ local function addOrReplaceAfterLastColon(inputString, addString)
     return inputString .. ": " .. addString
 end
 
-
 function RicksMLC_PayAtThePump.changeCreditBalance(creditCard, amount)
     local modData = creditCard:getModData()["RicksMLC_CreditCardz"]
     local remainAmount = 0
@@ -346,7 +345,7 @@ end
 -----------------------------------------
 -- Note for modders: To add mod support for your fuel handling there are three API methods to call:
 --   RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
---      Call in the :new() Check the source is a fuel pump and initialise the pay amounts.
+--      Call in :new(). Check the source is a fuel pump and initialise the pay amounts.
 --   RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.tankStart, self.tankTarget)
 --      Call in :update(). Check the funds balance and reduce any credit card funds by the delta fuel amount.
 --      Note that the :perform() is not needed as the funds balance checking and reducing is handled in updateFuelPurchase.
