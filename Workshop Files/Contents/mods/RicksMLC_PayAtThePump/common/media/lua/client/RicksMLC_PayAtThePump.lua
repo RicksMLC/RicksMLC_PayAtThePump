@@ -187,7 +187,7 @@ function RicksMLC_PayAtPumpAPI.AddRandomCredit(n)
     if not itemList:isEmpty() then
         for i = 0, itemList:size()-1 do 
             local creditCard = itemList:get(i)
-            changeCreditBalance(creditCard, ZombRand(1, n))
+            RicksMLC_PayAtThePump.changeCreditBalance(creditCard, ZombRand(1, n))
             thought = thought .. " " .. tostring(creditCard:getModData()["RicksMLC_CreditCardz"].Balance)
         end
     end
