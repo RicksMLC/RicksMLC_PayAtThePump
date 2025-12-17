@@ -77,22 +77,31 @@ end
 local function addOrReplaceAfterLastColon(inputString, addString)
     local lastColonIndex = findlast(inputString, ":")
     if lastColonIndex then
-        local firstColonIndex = inputString:find(":")
-        if firstColonIndex ~= lastColonIndex then
+        --local firstColonIndex = inputString:find(":")
+        --if firstColonIndex ~= lastColonIndex then -- The 42.13 single player format seems to only have one colon now.
             -- there are two colons, so replace after the second one.
             inputString = inputString:sub(1, lastColonIndex - 1)    
-        end
+        --end
     end
     return inputString .. ": " .. addString
+end
+
+function RicksMLC_PayAtThePump.initCreditCard(creditCard, initAmount)
+    local modData = {Balance = initAmount}
+    creditCard:getModData()["RicksMLC_CreditCardz"] = modData
+    local creditCardName = creditCard:getDisplayName() ..  ": Balance $" .. string.format("%.2f", initAmount)
+    creditCard:setName(creditCardName)
+    creditCard:setCustomName(true)
+    return creditCard:getModData()["RicksMLC_CreditCardz"]
 end
 
 function RicksMLC_PayAtThePump.changeCreditBalance(creditCard, amount)
     local modData = creditCard:getModData()["RicksMLC_CreditCardz"]
     local remainAmount = 0
 
+    local creditCardName = creditCard:getDisplayName()
     if not modData then
-        modData = {Balance = 0}
-        creditCard:getModData()["RicksMLC_CreditCardz"] = modData
+        modData = RicksMLC_PayAtThePump.initCreditCard(creditCard, 0)
     end
 
     modData.Balance = modData.Balance + amount
@@ -101,8 +110,7 @@ function RicksMLC_PayAtThePump.changeCreditBalance(creditCard, amount)
         modData.Balance = 0 
     end
     creditCard:getModData()["RicksMLC_CreditCardz"].Balance = modData.Balance
-
-    local creditCardName = creditCard:getDisplayName()
+    -- Update the credit card name to show the new balance  
     creditCardName = addOrReplaceAfterLastColon(creditCardName, "Balance $" .. string.format("%.2f", creditCard:getModData()["RicksMLC_CreditCardz"].Balance))
     creditCard:setName(creditCardName)
     creditCard:setCustomName(true)
@@ -127,6 +135,7 @@ function RicksMLC_PayAtPumpAPI.reduceCreditBalances(amount)
     if not itemList:isEmpty() then
         for i = 0, itemList:size()-1 do 
             amount = RicksMLC_PayAtThePump.changeCreditBalance(itemList:get(i), -amount)
+            syncItemModData(character, itemList:get(i))
             if amount <= 0 then return 0 end
         end
     end
@@ -146,7 +155,10 @@ function RicksMLC_PayAtPumpAPI.reduceCash(amount)
         for i = 0, itemList:size()-1 do
             local item = itemList:get(i) 
             local realItemContainer = item:getContainer() -- The actual container may be a subcontainer like a bag in the inventory
-            realItemContainer:DoRemoveItem(item)
+            sendRemoveItemFromContainer(realItemContainer, item)
+            -- B42.13: Is DoRemoveItem() replaced with sendRemoveItemFromContainer?
+            --realItemContainer:DoRemoveItem(item)
+            
             amount = amount - 1
             if amount <= 0 then return end
         end
@@ -208,7 +220,7 @@ end
 --------------------------------------------
 -- Detect if a credit card is picked up.
 
-require "TimedActions/ISInventoryTransferAction"
+--require "TimedActions/ISInventoryTransferAction"
 
 function RicksMLC_PayAtPumpAPI.adjustValueByOtherModsCardType(creditCard, initAmount)
     -- CreditCardPlus compatibility: silver < black < gold
@@ -234,25 +246,42 @@ function RicksMLC_PayAtPumpAPI.InitAnyCreditCards(character)
         local initBalance = ZombRand(SandboxVars.RicksMLC_PayAtThePump.MinRandomCredit, SandboxVars.RicksMLC_PayAtThePump.MaxRandomCredit)
         RicksMLC_PayAtPumpAPI.adjustValueByOtherModsCardType(itemList:get(i), initBalance)
         RicksMLC_PayAtThePump.changeCreditBalance(itemList:get(i), initBalance)
+        if isServer() then
+            DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPumpAPI.InitAnyCreditCards() - Initialized new credit card for player " .. tostring(character:getPlayerNum()) .. " with balance $" .. tostring(initBalance))
+            syncItemFields(character, itemList:get(i))
+            syncItemModData(character, itemList:get(i))
+        end
     end
 end
 
-local origTransferFn = ISInventoryTransferAction.perform
-function ISInventoryTransferAction.perform(self)
-    origTransferFn(self)
-
-    if not SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards then return end
-
-    -- Only check if adding to the charcter inventory.  We don't care about removing things from the character
-    -- or transferring from one container to another (eg inventory -> backpack)
-    if self.srcContainer == self.character:getInventory() or self.srcContainer:isInCharacterInventory(self.character) then
-        return
+-- Server side handler for init credit cards:
+Events.OnClientCommand.Add(
+    function(module, command, player, args)
+        if module == "RicksMLC_PayAtThePump" and command == "InitCreditCards" then
+            DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPumpAPI.InitAnyCreditCards() for player " .. tostring(player:getPlayerNum()))
+            RicksMLC_PayAtPumpAPI.InitAnyCreditCards(player)
+        end
     end
-    -- Check if the destination container is the character
-    if self.destContainer == self.character:getInventory() or self.destContainer:isInCharacterInventory(self.character) then
-        RicksMLC_PayAtPumpAPI.InitAnyCreditCards(self.character)
-    end
-end
+)
+
+
+-- B42.13 MP: The client side complete no longer exists.  Change to ISTransferAction:transferItem() override?
+-- local origTransferFn = ISInventoryTransferAction.complete
+-- function ISInventoryTransferAction.complete(self)
+--     origTransferFn(self)
+
+--     if not SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards then return end
+
+--     -- Only check if adding to the charcter inventory.  We don't care about removing things from the character
+--     -- or transferring from one container to another (eg inventory -> backpack)
+--     if self.srcContainer == self.character:getInventory() or self.srcContainer:isInCharacterInventory(self.character) then
+--         return
+--     end
+--     -- Check if the destination container is the character
+--     if self.destContainer == self.character:getInventory() or self.destContainer:isInCharacterInventory(self.character) then
+--         RicksMLC_PayAtPumpAPI.InitAnyCreditCards(self.character)
+--     end
+-- end
 
 --------------------------------------------
 -- The actual RefuelFromGasPump code is quite small compared to the economic system above.
@@ -368,8 +397,8 @@ function ISRefuelFromGasPump.update(self)
     RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.tankStart, self.tankTarget)
 end
 
-local overrideStop = ISRefuelFromGasPump.stop
-function ISRefuelFromGasPump.stop(self)
+local overrideStop = ISRefuelFromGasPump.serverStop
+function ISRefuelFromGasPump.serverStop(self)
     RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
     overrideStop(self)
 end
