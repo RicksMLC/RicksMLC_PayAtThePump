@@ -12,7 +12,8 @@
 --      Checks the funds balance and reduce any credit card funds by the delta fuel amount.
 --      Note that the :perform() is not needed as the funds balance checking and reducing is handled in updateFuelPurchase.
 --   RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
---      Call in :stop().   Handles the take fuel action abort state by finishing the payment of the final amount.
+--      Call in :stop() and :serverStop().
+--      Handles the take fuel action abort state by finishing the payment of the final amount.
 -----------------------------------------
 
 ---------------------------------------------
@@ -54,6 +55,12 @@ function ISTakeFuel.update(self)
     RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.itemStart, self.itemTarget)
 end
 
+local overrideServerStop = ISTakeFuel.serverStop
+function ISTakeFuel.serverStop(self)
+    RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+    overrideServerStop(self)
+end
+
 local overrideISTakeFuelStop = ISTakeFuel.stop
 function ISTakeFuel.stop(self)
     RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
@@ -79,13 +86,19 @@ if getActivatedMods():contains("\\TreadsFuelTypesFramework") then
             return this
         end
 
-        local ovrrideISPumpFuelToBarrelUpdate = ISTakeFuel.update
+        local ovrrideISPumpFuelToBarrelUpdate = ISPumpFuelToBarrel.update
         function ISPumpFuelToBarrel.update(self)
             overrideTakeFuelUpdate(self)
             RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.barrelStart, self.barrelTarget)
         end
 
-        local ovrrideISPumpFuelToBarrelStop = ISTakeFuel.stop
+        local ovrrideISPumpFuelToBarrelStop = ISPumpFuelToBarrel.serverStop
+        function ISPumpFuelToBarrel.serverStop(self)
+            RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+            ovrrideISPumpFuelToBarrelStop(self)
+        end
+
+        local ovrrideISPumpFuelToBarrelStop = ISPumpFuelToBarrel.stop
         function ISPumpFuelToBarrel.stop(self)
             RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
             ovrrideISPumpFuelToBarrelStop(self)
@@ -106,6 +119,12 @@ if getActivatedMods():contains("\\TreadsFuelTypesFramework") then
         function ISRefuelFromGasPumpRSFuel:update()
             overrideISRefuelFromGasPumpRSFuelUpdate(self)
             RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.tankStart, self.tankTarget)
+        end
+
+        local overrideISRefuelFromGasPumpRSFuelStop = ISRefuelFromGasPumpRSFuel.serverStop
+        function ISRefuelFromGasPumpRSFuel:serverStop()
+            RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+            overrideISRefuelFromGasPumpRSFuelStop(self)
         end
 
         local overrideISRefuelFromGasPumpRSFuelStop = ISRefuelFromGasPumpRSFuel.stop
@@ -166,6 +185,12 @@ if getActivatedMods():contains("\\ugPHP") then
             RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.part:getContainerContentAmount() - self.tankStart)
         end
 
+        local overrideUGFillPropaneTruckStop = UGFillPropaneTruck.serverStop
+        function UGFillPropaneTruck:serverStop()
+            RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+            overrideUGFillPropaneTruckStop(self)
+        end
+
         local overrideUGFillPropaneTruckStop = UGFillPropaneTruck.stop
         function UGFillPropaneTruck:stop()
             RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
@@ -188,6 +213,12 @@ if getActivatedMods():contains("\\ugPHP") then
         function UGTakePropane:update()
             overrideUGTakePropaneUpdate(self)
             RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.itemStart, self.itemTarget)
+        end
+
+        local overrideUGTakePropaneStop = UGTakePropane.serverStop
+        function UGTakePropane:serverStop()
+            RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+            overrideUGTakePropaneStop(self)
         end
 
         local overrideUGTakePropaneStop = UGTakePropane.stop
@@ -216,6 +247,12 @@ if getActivatedMods():contains("\\PzkVanillaPlusCarPack") then
         RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.tankStart, self.tankTarget)
     end
 
+    local overrideStop = ISRefuelFromGasPumpPZK.serverStop
+    function ISRefuelFromGasPumpPZK.serverStop(self)
+        RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+        overrideStop(self)
+    end
+    
     local overrideStop = ISRefuelFromGasPumpPZK.stop
     function ISRefuelFromGasPumpPZK.stop(self)
         RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)

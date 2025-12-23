@@ -40,8 +40,8 @@ function RicksMLC_PayAtPumpAPI.findMoneyClosure(x, obj)
     return false            
 end
 
-function RicksMLC_PayAtThePump.getPlayerMoney()
-    local itemContainer = getPlayer():getInventory()
+function RicksMLC_PayAtThePump.getPlayerMoney(character)
+    local itemContainer = character:getInventory()
     local itemList = itemContainer:getAllEval(RicksMLC_PayAtPumpAPI.findMoneyClosure)
     if (SandboxVars.RicksMLC_PayAtThePump.AutoSearchForMoney and itemList:isEmpty()) then
         itemList = itemContainer:getAllEvalRecurse(RicksMLC_PayAtPumpAPI.findMoneyClosure)
@@ -102,6 +102,7 @@ function RicksMLC_PayAtThePump.changeCreditBalance(creditCard, amount)
     local creditCardName = creditCard:getDisplayName()
     if not modData then
         modData = RicksMLC_PayAtThePump.initCreditCard(creditCard, 0)
+        creditCardName = creditCard:getDisplayName()
     end
 
     modData.Balance = modData.Balance + amount
@@ -124,29 +125,37 @@ function RicksMLC_PayAtThePump.findValidCreditCardClosure(x)
             and x:getModData()["RicksMLC_CreditCardz"].Balance > 0)
 end 
 
-function RicksMLC_PayAtPumpAPI.reduceCreditBalances(amount)
+function RicksMLC_PayAtPumpAPI.reduceCreditBalances(character, amount)
     if not SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards then return amount end
 
-    local itemContainer = getPlayer():getInventory()
+    local itemContainer = character:getInventory()
     local itemList = itemContainer:getAllEval(RicksMLC_PayAtThePump.findValidCreditCardClosure)
     if (SandboxVars.RicksMLC_PayAtThePump.AutoSearchForMoney and itemList:isEmpty()) then
         itemList = itemContainer:getAllEvalRecurse(RicksMLC_PayAtThePump.findValidCreditCardClosure)
     end
+    local reduceAmount = amount
     if not itemList:isEmpty() then
         for i = 0, itemList:size()-1 do 
             amount = RicksMLC_PayAtThePump.changeCreditBalance(itemList:get(i), -amount)
-            syncItemModData(character, itemList:get(i))
+            --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPumpAPI.reduceCreditBalances() - Reduced credit card for player " .. tostring(character:getPlayerNum()) .. " Card:" .. itemList:get(i):getDisplayName() .. " new balance $" .. tostring(itemList:get(i):getModData()["RicksMLC_CreditCardz"].Balance))
+            if isClient() then
+                sendClientCommand(character, "RicksMLC_PayAtThePump", 'ReduceCredit', {item = itemList:get(i), amount = reduceAmount - amount})
+            end
+            if isServer() then
+                syncItemModData(character, itemList:get(i))
+                syncItemFields(character, itemList:get(i))
+            end
             if amount <= 0 then return 0 end
         end
     end
     return amount
 end
 
-function RicksMLC_PayAtPumpAPI.reduceCash(amount)
+function RicksMLC_PayAtPumpAPI.reduceCash(character, amount)
     -- Credit cards exhaused, resort to cash:
     if not SandboxVars.RicksMLC_PayAtThePump.AllowMoney then return end
 
-    local itemContainer = getPlayer():getInventory()
+    local itemContainer = character:getInventory()
     local itemList = itemContainer:getAllType("Money")
     if (SandboxVars.RicksMLC_PayAtThePump.AutoSearchForMoney and itemList:isEmpty()) then
         itemList = itemContainer:getAllTypeRecurse("Money")
@@ -155,10 +164,16 @@ function RicksMLC_PayAtPumpAPI.reduceCash(amount)
         for i = 0, itemList:size()-1 do
             local item = itemList:get(i) 
             local realItemContainer = item:getContainer() -- The actual container may be a subcontainer like a bag in the inventory
-            sendRemoveItemFromContainer(realItemContainer, item)
             -- B42.13: Is DoRemoveItem() replaced with sendRemoveItemFromContainer?
-            --realItemContainer:DoRemoveItem(item)
-            
+            --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPumpAPI.reduceCash() removing Money item from player " .. tostring(character:getPlayerNum()))
+            realItemContainer:Remove(item)
+            if isServer() then
+                sendRemoveItemFromContainer(realItemContainer, item)
+            end
+            if isClient() then
+                --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPumpAPI.reduceCash() for player " .. tostring(character:getPlayerNum()) .. " removing item " .. tostring(item:getID()))
+                sendClientCommand(character, "RicksMLC_PayAtThePump", 'ReduceCash', {item = item, amount = amount})
+            end
             amount = amount - 1
             if amount <= 0 then return end
         end
@@ -175,9 +190,9 @@ local function Think(player, thought, colourNum)
     player:setHaloNote(thought, r[colourNum] * 255, g[colourNum] * 255, b[colourNum] * 255, 250)
 end
 
-function RicksMLC_PayAtPumpAPI.reduceFunds(amount)
+function RicksMLC_PayAtPumpAPI.reduceFunds(character, amount)
     -- reduce the credit cards before cash:
-    amount = RicksMLC_PayAtPumpAPI.reduceCreditBalances(amount)
+    amount = RicksMLC_PayAtPumpAPI.reduceCreditBalances(character, amount)
 
     if amount <= 0 then return 0 end
 
@@ -185,7 +200,7 @@ function RicksMLC_PayAtPumpAPI.reduceFunds(amount)
 
     -- Cash is the last resort - can only use whole numbers
     if math.floor(amount) > 0 then
-        RicksMLC_PayAtPumpAPI.reduceCash(math.floor(amount))
+        RicksMLC_PayAtPumpAPI.reduceCash(character, math.floor(amount))
     end
     return amount - math.floor(amount) -- return the excess cents for the next charge
 end
@@ -204,7 +219,7 @@ function RicksMLC_PayAtPumpAPI.AddRandomCredit(n)
         end
     end
     Think(getPlayer(), thought, 1)
-    local money = RicksMLC_PayAtThePump.getPlayerMoney()
+    local money = RicksMLC_PayAtThePump.getPlayerMoney(getPlayer())
     --DebugLog.log(DebugType.Mod, "AddRandomCredit() Money avail: Cash: " .. tostring(money.Cash) .. " Credit: " .. tostring(money.Credit))
 end
 
@@ -243,45 +258,40 @@ function RicksMLC_PayAtPumpAPI.InitAnyCreditCards(character)
     local itemList = itemContainer:getAllEvalRecurse(RicksMLC_PayAtPumpAPI.detectNewCreditCardClosure)
     if not itemList then return end
     for i = 0, itemList:size()-1 do 
-        local initBalance = ZombRand(SandboxVars.RicksMLC_PayAtThePump.MinRandomCredit, SandboxVars.RicksMLC_PayAtThePump.MaxRandomCredit)
+        local initBalance = ZombRand(SandboxVars.RicksMLC_PayAtThePump.MinRandomCredit * 100.0, SandboxVars.RicksMLC_PayAtThePump.MaxRandomCredit * 100.0) / 100.0
         RicksMLC_PayAtPumpAPI.adjustValueByOtherModsCardType(itemList:get(i), initBalance)
         RicksMLC_PayAtThePump.changeCreditBalance(itemList:get(i), initBalance)
         if isServer() then
-            DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPumpAPI.InitAnyCreditCards() - Initialized new credit card for player " .. tostring(character:getPlayerNum()) .. " with balance $" .. tostring(initBalance))
+            --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPumpAPI.InitAnyCreditCards() - Initialized new credit card for player " .. tostring(character:getPlayerNum()) .. " with balance $" .. tostring(initBalance))
             syncItemFields(character, itemList:get(i))
             syncItemModData(character, itemList:get(i))
         end
     end
 end
 
--- Server side handler for init credit cards:
+-- Server side handler for init credit cards and reduce funds:
 Events.OnClientCommand.Add(
     function(module, command, player, args)
-        if module == "RicksMLC_PayAtThePump" and command == "InitCreditCards" then
-            DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPumpAPI.InitAnyCreditCards() for player " .. tostring(player:getPlayerNum()))
-            RicksMLC_PayAtPumpAPI.InitAnyCreditCards(player)
+        if module == "RicksMLC_PayAtThePump" then
+            if command == "InitCreditCards" then
+                --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPump.InitAnyCreditCards() for player " .. tostring(player:getPlayerNum()))
+                RicksMLC_PayAtPumpAPI.InitAnyCreditCards(player)
+            elseif command == "ReduceCash" then
+                --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPump.reduceCash() for player " .. tostring(player:getPlayerNum()) .. " removing item " .. tostring(args.item:getID()))
+                RicksMLC_PayAtPumpAPI.reduceCash(player, args.amount)
+            elseif command == "ReduceCredit" then
+                --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPump.changeCreditBalance() for player " .. tostring(player:getPlayerNum() .. " ".. args.item:getDisplayName() .. " amount " .. tostring(args.amount)  ))
+                RicksMLC_PayAtPumpAPI.reduceCreditBalances(player, args.amount)
+            elseif command == "Stop" then
+                --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPumpAPI.handleEmergencyStop() for player " .. tostring(player:getPlayerNum()))
+                local timedAction = player:getModData().RicksMLC_PayAtThePump
+                if timedAction then
+                    RicksMLC_PayAtPumpAPI.handleEmergencyStop(timedAction)
+                end
+            end
         end
     end
 )
-
-
--- B42.13 MP: The client side complete no longer exists.  Change to ISTransferAction:transferItem() override?
--- local origTransferFn = ISInventoryTransferAction.complete
--- function ISInventoryTransferAction.complete(self)
---     origTransferFn(self)
-
---     if not SandboxVars.RicksMLC_PayAtThePump.AllowCreditCards then return end
-
---     -- Only check if adding to the charcter inventory.  We don't care about removing things from the character
---     -- or transferring from one container to another (eg inventory -> backpack)
---     if self.srcContainer == self.character:getInventory() or self.srcContainer:isInCharacterInventory(self.character) then
---         return
---     end
---     -- Check if the destination container is the character
---     if self.destContainer == self.character:getInventory() or self.destContainer:isInCharacterInventory(self.character) then
---         RicksMLC_PayAtPumpAPI.InitAnyCreditCards(self.character)
---     end
--- end
 
 --------------------------------------------
 -- The actual RefuelFromGasPump code is quite small compared to the economic system above.
@@ -324,11 +334,15 @@ function RicksMLC_PayAtPumpAPI.payForFuel(self)
     local price = RicksMLC_PayAtPumpAPI.getPricePerLitre(self)
     local cost = RicksMLC_PayAtPumpAPI.roundMoney(self.deltaFuel * price, 2)
     if math.floor(cost * 100) > 0 then
-        local change = RicksMLC_PayAtPumpAPI.reduceFunds(cost)
+        local change = RicksMLC_PayAtPumpAPI.reduceFunds(self.character, cost)
         self.deltaFuel = self.deltaFuel - ((cost - change) / price) -- not really change, but we can't split Money, so this will reduce every whole dollar.
-        local money = RicksMLC_PayAtThePump.getPlayerMoney()
+        local money = RicksMLC_PayAtThePump.getPlayerMoney(self.character)
         if money.Cash + money.Credit <= 0 then
-            self:forceStop()
+            if isServer() then
+                self.netAction:forceComplete()
+            else
+                self:forceStop()
+            end
         end
     end    
 end
@@ -360,11 +374,11 @@ function RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
         local price = RicksMLC_PayAtPumpAPI.getPricePerLitre(self)
         local cost = RicksMLC_PayAtPumpAPI.roundMoney(self.deltaFuel * price, 2)
         if cost > 0.01 then
-            local change = RicksMLC_PayAtPumpAPI.reduceFunds(cost)
+            local change = RicksMLC_PayAtPumpAPI.reduceFunds(self.character, cost)
             if change > 0 then
-                local money = RicksMLC_PayAtThePump.getPlayerMoney()
+                local money = RicksMLC_PayAtThePump.getPlayerMoney(self.character)
                 if money.Cash > 0 then
-                    RicksMLC_PayAtPumpAPI.reduceFunds(1) -- no freebies.
+                    RicksMLC_PayAtPumpAPI.reduceFunds(self.character, 1) -- no freebies.
                 end
             end
         end
@@ -397,10 +411,16 @@ function ISRefuelFromGasPump.update(self)
     RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.tankStart, self.tankTarget)
 end
 
-local overrideStop = ISRefuelFromGasPump.serverStop
+local overrideServerStop = ISRefuelFromGasPump.serverStop
 function ISRefuelFromGasPump.serverStop(self)
+    --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPump::serverStop() called")
+    RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+    overrideServerStop(self)
+end
+
+local overrideStop = ISRefuelFromGasPump.stop
+function ISRefuelFromGasPump.stop(self)
+    --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPump::stop() called")
     RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
     overrideStop(self)
 end
-
-
