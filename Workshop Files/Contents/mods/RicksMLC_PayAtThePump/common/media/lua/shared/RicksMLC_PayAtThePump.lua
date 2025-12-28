@@ -442,11 +442,15 @@ function ISTakeFuel.update(self)
     RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.itemStart, self.itemTarget)
 end
 
-local overrideISTakeFuelServerStop = ISTakeFuel.serverStop
+-- As of 42.13 there is no serverStop() method for ISTakeFuel, so commenting this out.
+--local overrideISTakeFuelServerStop = ISTakeFuel.serverStop
 function ISTakeFuel.serverStop(self)
-    --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPump::serverStop() called")
     RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
-    overrideISTakeFuelServerStop(self)
+    -- Hack: calling complete() will fill the petrolCan, so we need to set it to "full" first. See the vanila ISTakeFuel:complete()
+    self.itemTarget = self.petrolCan:getFluidContainer():getAmount()
+    self:complete()
+    -- The vanilla code does not have a serverStop() method for ISTakeFuel, so commenting this out.
+    --overrideISTakeFuelServerStop(self)
 end
 
 local overrideISTakeFuelStop = ISTakeFuel.stop
