@@ -424,3 +424,33 @@ function ISRefuelFromGasPump.stop(self)
     RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
     overrideStop(self)
 end
+
+-----------------------------------------
+-- ISTakeFuel for the right click fuel pump to container action
+require "TimedActions/ISTakeFuel"
+
+local overrideISTakeFuelNew = ISTakeFuel.new
+function ISTakeFuel:new(character, fuelStation, petrolCan, time)
+    local this = overrideISTakeFuelNew(self, character, fuelStation, petrolCan, time)
+    RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
+    return this
+end
+
+local overrideTakeFuelUpdate = ISTakeFuel.update
+function ISTakeFuel.update(self)
+    overrideTakeFuelUpdate(self)
+    RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.itemStart, self.itemTarget)
+end
+
+local overrideISTakeFuelServerStop = ISTakeFuel.serverStop
+function ISTakeFuel.serverStop(self)
+    --DebugLog.log(DebugType.Mod, "RicksMLC_PayAtPump::serverStop() called")
+    RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+    overrideISTakeFuelServerStop(self)
+end
+
+local overrideISTakeFuelStop = ISTakeFuel.stop
+function ISTakeFuel.stop(self)
+    RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+    overrideISTakeFuelStop(self)
+end

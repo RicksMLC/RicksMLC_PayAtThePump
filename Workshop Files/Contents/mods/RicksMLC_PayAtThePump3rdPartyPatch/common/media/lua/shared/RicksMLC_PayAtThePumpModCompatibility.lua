@@ -39,33 +39,35 @@ if getActivatedMods():contains("\\TreadsFuelTypesFramework") then
         RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
         return this
     end
-else
-    require "TimedActions/ISTakeFuel"
-    local overrideISTakeFuelNew = ISTakeFuel.new
-    function ISTakeFuel:new(character, fuelStation, petrolCan, time)
-        local this = overrideISTakeFuelNew(self, character, fuelStation, petrolCan, time)
-        RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
-        return this
-    end
+    -- Commented out as this is now in FuelAPI compatibility sub-mod.  The below code is in the vanilla RicksMLC_PayAtThePump.lua
+-- else
+--     require "TimedActions/ISTakeFuel"
+--     local overrideISTakeFuelNew = ISTakeFuel.new
+--     function ISTakeFuel:new(character, fuelStation, petrolCan, time)
+--         local this = overrideISTakeFuelNew(self, character, fuelStation, petrolCan, time)
+--         RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
+--         return this
+--     end
 end
 
-local overrideTakeFuelUpdate = ISTakeFuel.update
-function ISTakeFuel.update(self)
-    overrideTakeFuelUpdate(self)
-    RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.itemStart, self.itemTarget)
-end
+-- FIXME: Remove as these are in the vanilla code.
+-- local overrideTakeFuelUpdate = ISTakeFuel.update
+-- function ISTakeFuel.update(self)
+--     overrideTakeFuelUpdate(self)
+--     RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.itemStart, self.itemTarget)
+-- end
 
-local overrideServerStop = ISTakeFuel.serverStop
-function ISTakeFuel.serverStop(self)
-    RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
-    overrideServerStop(self)
-end
+-- local overrideServerStop = ISTakeFuel.serverStop
+-- function ISTakeFuel.serverStop(self)
+--     RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+--     overrideServerStop(self)
+-- end
 
-local overrideISTakeFuelStop = ISTakeFuel.stop
-function ISTakeFuel.stop(self)
-    RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
-    overrideISTakeFuelStop(self)
-end
+-- local overrideISTakeFuelStop = ISTakeFuel.stop
+-- function ISTakeFuel.stop(self)
+--     RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
+--     overrideISTakeFuelStop(self)
+-- end
 
 
 -------------------------------------------------------------------
