@@ -231,36 +231,7 @@ if getActivatedMods():contains("\\ugPHP") then
     end
 end
 
----------------------------------------------------------------------------------
--- Compatibility for Pzk's Vanilla Plus Car Pack
-if getActivatedMods():contains("\\PzkVanillaPlusCarPack") then
-    require "Vehicles/TimedActions/FuelTruck_ISRefuelFromGasPump_start"
 
-    local overrideISRefuelFromGasPumpPZKNew = ISRefuelFromGasPumpPZK.new
-    function ISRefuelFromGasPumpPZK:new(character, part, fuelStation, time)
-        local this = overrideISRefuelFromGasPumpPZKNew(self, character, part, fuelStation, time)
-        RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
-        return this
-    end
-
-    local overrideISRefuelFromGasPumpPZKUpdate = ISRefuelFromGasPumpPZK.update
-    function ISRefuelFromGasPumpPZK.update(self)
-        overrideISRefuelFromGasPumpPZKUpdate(self)
-        RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, self.tankStart, self.tankTarget)
-    end
-
-    local overrideStop = ISRefuelFromGasPumpPZK.serverStop
-    function ISRefuelFromGasPumpPZK.serverStop(self)
-        RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
-        overrideStop(self)
-    end
-    
-    local overrideStop = ISRefuelFromGasPumpPZK.stop
-    function ISRefuelFromGasPumpPZK.stop(self)
-        RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
-        overrideStop(self)
-    end
-end
 
 ---------------------------------------------------------------------------------
 if getActivatedMods():contains("\\SimpleOverhaulTraitsAndOccupations") then
