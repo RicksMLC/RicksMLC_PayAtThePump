@@ -3,7 +3,7 @@
 -- Requires RicksMLC_PayAtThePump.lua
 
 -----------------------------------------
--- Note for modders: To add mod support for your fuel handling there are three API methods to call:
+-- Note for modders: To add mod support for your fuel TimedAction handling there are three API methods to call:
 --   RicksMLC_PayAtPumpAPI.initPurchaseFuel(this)
 --      Call in :new().
 --      Checks the source is a fuel pump and initialise the pay amounts.
@@ -15,6 +15,27 @@
 --      Call in :stop() and :serverStop().
 --      Handles the take fuel action abort state by finishing the payment of the final amount.
 -----------------------------------------
+-- For mods which do not use the TimedAction approach the API can still be used to reduce funds
+-- by calling RicksMLC_PayAtPumpAPI.payForFuel(fuelLitres, character, pricePerLitre)
+-- eg:
+--      local newTankAmount = gasTank:getContainerContentAmount() + fuelExtracted
+--      local fuelUnpurchased, isOutOfMoney = RicksMLC_PayAtPumpAPI.payForFuel(fuelExtracted, character, pricePerLitre)
+--      if isOutOfMoney then
+--          -- remove the fuelUnpurchased from the new amount
+--          newTankAmount = newTankAmount - fuelUnpurchased
+--          shouldStop = true
+--      end
+--      gasTank:setContainerContentAmount(newTankAmount)
+--      vehicle:transmitPartModData(gasTank)
+------------------------------------------
+--
+-- Mod Compatibility:
+--      PzkVanillaPlusCarPack (see RicksMLC_PayAtThePumpModCompatibilityClient.lua)
+--      FuelAPI https://steamcommunity.com/sharedfiles/filedetails/?id=2688538916
+--      Tread's Fuel Types Framework [41.65+] https://steamcommunity.com/sharedfiles/filedetails/?id=2765042813
+--      Pumps Have Propane https://steamcommunity.com/sharedfiles/filedetails/?id=2739570406
+--      CreditCardsPlus https://steamcommunity.com/sharedfiles/filedetails/?id=2873621032
+--      Snake's Mod https://steamcommunity.com/sharedfiles/filedetails/?id=2719327441 (PremiumCreditCard)
 
 ---------------------------------------------
 -- Commented out code: debug logging of active mods to check the name of mods to add compatibility for

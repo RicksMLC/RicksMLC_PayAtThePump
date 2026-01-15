@@ -8,13 +8,6 @@
 -- TimedActions/ISTakeFuel
 -- TimedActions/ISRefuelFromGasPump
 -- 
--- Mod Compatibility:
---      FuelAPI https://steamcommunity.com/sharedfiles/filedetails/?id=2688538916
---      Tread's Fuel Types Framework [41.65+] https://steamcommunity.com/sharedfiles/filedetails/?id=2765042813
---      Pumps Have Propane https://steamcommunity.com/sharedfiles/filedetails/?id=2739570406
---      CreditCardsPlus https://steamcommunity.com/sharedfiles/filedetails/?id=2873621032
---      Snake's Mod https://steamcommunity.com/sharedfiles/filedetails/?id=2719327441 (PremiumCreditCard)
---
 -- The gameplay action can be simple (and magic) or more player interactive:
 -- 1993 price was $1.17/gal => $0.26 per litre
 --  1) Check the player's inventory for cash and reduce by the petrol amount ($0.26/litre?)
@@ -320,6 +313,7 @@ function RicksMLC_PayAtPumpAPI.roundMoney(num, decimalPlaces)
 end
 
 function RicksMLC_PayAtPumpAPI.getPricePerLitre(self)
+    if not self then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol end
     if not self.fuelType then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol end
     if self.fuelType == "Gasoline" then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol end
     if self.fuelType == "Diesel" then return SandboxVars.RicksMLC_PayAtThePump.PricePerLitreDiesel end
@@ -330,21 +324,52 @@ function RicksMLC_PayAtPumpAPI.getPricePerLitre(self)
     return SandboxVars.RicksMLC_PayAtThePump.PricePerLitrePetrol
 end
 
-function RicksMLC_PayAtPumpAPI.payForFuel(self)
-    local price = RicksMLC_PayAtPumpAPI.getPricePerLitre(self)
-    local cost = RicksMLC_PayAtPumpAPI.roundMoney(self.deltaFuel * price, 2)
+-- Pay for the fuelLitres. Returns the remaining amount of fuel not paid for and if the character is out of money
+-- The player funds will be reduced by the amount needed to pay for the fuelLitres.  If the player can't afford it
+-- the player funds will be 0 (no money and credit cards will have 0.00 balance) and the return value
+-- fuelLitres will be the amount of fuel not purchased.  In this way the amount of fuel in the vehicle tank can be adjusted
+-- so the purchased amount is accurate.
+-- eg: 
+--      local pricePerLitre = RicksMLC_PayAtThePumpAPI.getPricePerLitre()
+--      local newTankAmount = gasTank:getContainerContentAmount() + fuelExtracted
+--      local fuelUnpurchased, isOutOfMoney = RicksMLC_PayAtPumpAPI.payForFuel(fuelExtracted, character, pricePerLitre)
+--      if isOutOfMoney then
+--          -- remove the fuelUnpurchased from the vehicle
+--          newTankAmount = newTankAmount - fuelUnpurchased
+--          shouldStop = true
+--      end
+--      gasTank:setContainerContentAmount(newTankAmount)
+--      vehicle:transmitPartModData(gasTank)
+--
+--@param fuelLitres - amount of fuel to purchase in litres
+--@param character - the game character paying (typically the player)
+--@param pricePerLitre - price in dollars for the fuel.
+function RicksMLC_PayAtPumpAPI.payForFuel(fuelLitres, character, pricePerLitre)
+    local cost = RicksMLC_PayAtPumpAPI.roundMoney(fuelLitres * pricePerLitre, 2)
+    local isOutOfMoney = false
     if math.floor(cost * 100) > 0 then
-        local change = RicksMLC_PayAtPumpAPI.reduceFunds(self.character, cost)
-        self.deltaFuel = self.deltaFuel - ((cost - change) / price) -- not really change, but we can't split Money, so this will reduce every whole dollar.
-        local money = RicksMLC_PayAtThePump.getPlayerMoney(self.character)
-        if money.Cash + money.Credit <= 0 then
+        local change = RicksMLC_PayAtPumpAPI.reduceFunds(character, cost)
+        fuelLitres = fuelLitres - ((cost - change) / pricePerLitre) -- not really change, but we can't split Money, so this will reduce every whole dollar.
+        local money = RicksMLC_PayAtThePump.getPlayerMoney(character)
+        isOutOfMoney = money.Cash + money.Credit <= 0 
+    end
+    return fuelLitres, isOutOfMoney
+end
+
+function RicksMLC_PayAtPumpAPI.payForFuelTA(self)
+    local unpaidFuel, isOutOfMoney = RicksMLC_PayAtPumpAPI.payForFuel(self.deltaFuel, self.character, RicksMLC_PayAtPumpAPI.getPricePerLitre(self))
+
+    if unpaidFuel < self.deltaFuel then
+        -- some fuel was paid for
+        self.deltaFuel = unpaidFuel
+        if isOutOfMoney then
             if isServer() then
                 self.netAction:forceComplete()
             else
                 self:forceStop()
             end
         end
-    end    
+    end
 end
 
 -- RicksMLC_PayAtPumpAPI.updateFuelPurchase
@@ -364,7 +389,7 @@ function RicksMLC_PayAtPumpAPI.updateFuelPurchase(self, startOrAmt, target)
     end
     self.deltaFuel = self.deltaFuel + self.fuelPurchased - self.prevFuelPurchased
     self.prevFuelPurchased = self.fuelPurchased
-    RicksMLC_PayAtPumpAPI.payForFuel(self)
+    RicksMLC_PayAtPumpAPI.payForFuelTA(self)
 end
 
 function RicksMLC_PayAtPumpAPI.handleEmergencyStop(self)
