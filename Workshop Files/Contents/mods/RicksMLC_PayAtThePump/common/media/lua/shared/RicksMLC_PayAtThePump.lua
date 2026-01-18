@@ -360,14 +360,14 @@ function RicksMLC_PayAtPumpAPI.payForFuelTA(self)
     local unpaidFuel, isOutOfMoney = RicksMLC_PayAtPumpAPI.payForFuel(self.deltaFuel, self.character, RicksMLC_PayAtPumpAPI.getPricePerLitre(self))
 
     if unpaidFuel < self.deltaFuel then
-        -- some fuel was paid for
+        -- some fuel was paid for, but not all of it.  Save the remainder
         self.deltaFuel = unpaidFuel
-        if isOutOfMoney then
-            if isServer() then
-                self.netAction:forceComplete()
-            else
-                self:forceStop()
-            end
+    end
+    if isOutOfMoney then
+        if isServer() then
+            self.netAction:forceComplete()
+        else
+            self:forceStop()
         end
     end
 end
